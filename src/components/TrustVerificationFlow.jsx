@@ -19,12 +19,12 @@ export default function TrustVerificationFlow({ compact = false }) {
     {
       num: '3',
       title: 'MatchCred Verifies Status',
-      desc: 'Credentials maintain strict audit trail: Institution verified, Candidate submitted, or Unverified.'
+      desc: 'Credentials maintain strict audit trail: Candidate submitted or CV extracted; issuer verification is not yet available.'
     },
     {
       num: '4',
       title: 'GenLayer Evaluates Evidence',
-      desc: 'Intelligent Contract on GenLayer Studionet evaluates requirements against verifiable evidence.'
+      desc: 'Intelligent Contract on GenLayer Studionet evaluates requirements against candidate-submitted evidence.'
     }
   ];
 

@@ -342,7 +342,7 @@ export default function CredentialsScreen({
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value="Candidate submitted">Candidate submitted</option>
-                <option value="Institution verified">Institution verified</option>
+                <option value="Candidate submitted">Candidate submitted</option>
                 <option value="Unverified">Unverified</option>
               </select>
             </div>
@@ -418,7 +418,7 @@ export default function CredentialsScreen({
                     )}
                     <span>•</span>
                     <span className={`status-badge ${getStatusBadgeClass(cred.status)}`}>
-                      {cred.status === 'Institution verified' ? '✓ Institution verified' : cred.status}
+                      {cred.status === 'Institution verified' ? 'Candidate submitted (unverified)' : cred.status}
                     </span>
                   </div>
                 </div>
