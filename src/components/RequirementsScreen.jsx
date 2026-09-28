@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { CONTRACT_READY } from '../services/genlayerService';
 import { parseRequirementsText } from '../services/requirementMatcher';
 import { extractOpportunityFromUrl } from '../services/opportunityExtractor';
 
@@ -12,6 +13,7 @@ export default function RequirementsScreen({
   onClearPreset,
   onEvaluate,
   isEvaluating,
+  evaluationError,
   onBack
 }) {
   // Input Method: 'paste' (Option A) or 'link' (Option B)
@@ -323,6 +325,7 @@ export default function RequirementsScreen({
           ← Back to Credentials
         </button>
 
+        {evaluationError && <p role="alert" style={{ color: '#f87171', marginBottom: '1rem' }}>{evaluationError}</p>}
         <button
           type="button"
           className="btn btn-primary"
@@ -332,10 +335,10 @@ export default function RequirementsScreen({
           {isEvaluating ? (
             <>
               <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
-              Evaluating via GenLayer Studionet...
+              {CONTRACT_READY ? 'Waiting for GenLayer consensus...' : 'Building local preview...'}
             </>
           ) : (
-            'Compare & Generate Match Report →'
+            CONTRACT_READY ? 'Submit public GenLayer review →' : 'Generate local eligibility preview →'
           )}
         </button>
       </div>

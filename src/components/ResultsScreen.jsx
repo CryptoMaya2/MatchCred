@@ -57,7 +57,7 @@ export default function ResultsScreen({
           {opportunityTitle ? (
             <span>Eligibility assessment for <strong>{opportunityTitle}</strong></span>
           ) : (
-            'Eligibility assessment results based on your verified and submitted credentials.'
+            'Eligibility assessment results based on candidate-submitted information.'
           )}
         </p>
       </div>
@@ -93,22 +93,17 @@ export default function ResultsScreen({
             )}
           </div>
 
-          {/* GenLayer Studionet On-Chain Verification Proof */}
-          {report.evaluationSource && (
-            <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600, flexWrap: 'wrap' }}>
-              <span>⛓️ Verified via {report.evaluationSource}</span>
-              {report.studionetBlock && (
-                <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem' }}>
-                  Block #{report.studionetBlock}
-                </span>
-              )}
-            </div>
-          )}
+          <div style={{ marginTop: '0.85rem', fontSize: '0.82rem', color: report.genLayerVerified ? '#08734e' : '#965b09' }}>
+            {report.genLayerVerified ? '⛓️ Consensus reviewed on GenLayer Studionet' : '◌ Local eligibility preview · No onchain review'}
+            {report.transactionHash && <div style={{ marginTop: '0.4rem' }}>Transaction: <code style={{ overflowWrap: 'anywhere' }}>{report.transactionHash}</code></div>}
+            {report.contractAddress && <div>Contract: <code>{report.contractAddress}</code></div>}
+            <div style={{ marginTop: '0.4rem', opacity: 0.8 }}>Self-reported credentials are not authenticated by an issuer.</div>
+          </div>
         </div>
 
         <div className="progress-bar-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>
-            <span>Verified Match</span>
+            <span>Requirements supported</span>
             <span>{matchPercentage}%</span>
           </div>
           <div className="progress-track">
@@ -265,7 +260,7 @@ export default function ResultsScreen({
                     color: item.evidenceType === 'verified' ? '#15803d' : item.evidenceType === 'cv' ? '#1d4ed8' : item.evidenceType === 'cv-gap' ? '#b45309' : '#64748b'
                   }}>
                     {item.evidenceType === 'verified'
-                      ? '✓ Verified Credential'
+                      ? 'Candidate-submitted credential'
                       : item.evidenceType === 'cv'
                       ? '📄 Candidate CV'
                       : item.evidenceType === 'cv-gap'
@@ -521,7 +516,7 @@ export default function ResultsScreen({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span className="genlayer-badge">GenLayer Studionet</span>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155' }}>
-              Studionet Active (Chain ID 61999)
+              {report.genLayerVerified ? 'Consensus reviewed (Chain ID 61999)' : 'Local preview · Contract review pending'}
             </span>
           </div>
 
@@ -574,27 +569,9 @@ export default function ResultsScreen({
           <div style={{ marginTop: '0.75rem' }}>
             <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.4rem' }}>
               The application cleanly isolates <strong>Credential information</strong>, <strong>Opportunity requirements</strong>, and <strong>Requirement evaluation</strong>.
-              In GenLayer, this evaluation is governed by an on-chain Intelligent Contract executing non-deterministic LLM consensus:
+              When submitted onchain, an Intelligent Contract applies validator consensus to the evidence provided:
             </p>
-            <pre className="genlayer-code-preview">
-{`# GenLayer Intelligent Contract (Python)
-# contracts/MatchCred.py
-import genlayer as gl
-
-class MatchCredContract(gl.Contract):
-    @gl.public.view
-    def evaluate_requirements(self, credentials: list[dict], requirements: list[str]) -> dict:
-        prompt = f"""
-        Compare candidate credentials with opportunity requirements:
-        Credentials: {credentials}
-        Requirements: {requirements}
-        Classify each as: MET, NOT MET, or UNCLEAR.
-        Never assume clinical experience from a degree without work history.
-        """
-        # GenLayer validator consensus evaluates the verifiable credentials
-        return gl.llm_call(prompt)
-`}
-            </pre>
+            <p>Contract address: {report.contractAddress || 'Not deployed yet'}. An onchain decision requires a finalized transaction. Local previews are separate.</p>
           </div>
         )}
       </div>

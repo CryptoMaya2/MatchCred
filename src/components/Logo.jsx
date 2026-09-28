@@ -8,7 +8,7 @@ import React from 'react';
  * integrates seamlessly into the geometric dual peaks of 'M' (Match/Mutual Consensus).
  * Formed as a unified, architectural symbol conveying trust, verification, and precision.
  * 
- * Accent: linear-gradient(120deg, #7C5CFC 0%, #4DA3FF 50%, #7DE2FF 100%)
+ * Accent: linear-gradient(120deg, #165fd0 0%, #4b91ec 50%, #9accff 100%)
  */
 export function LogoIcon({ size = 36, className = '', variant = 'dark' }) {
   const isLight = variant === 'light';
@@ -25,9 +25,9 @@ export function LogoIcon({ size = 36, className = '', variant = 'dark' }) {
     >
       <defs>
         <linearGradient id="cmAccentGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#7C5CFC" />
-          <stop offset="50%" stopColor="#4DA3FF" />
-          <stop offset="100%" stopColor="#7DE2FF" />
+          <stop offset="0%" stopColor="#165fd0" />
+          <stop offset="50%" stopColor="#4b91ec" />
+          <stop offset="100%" stopColor="#9accff" />
         </linearGradient>
         <linearGradient id="cmCardGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={isLight ? "#F1F5F9" : "#141721"} />
@@ -89,11 +89,11 @@ export default function Logo({ size = 36, showWordmark = true, variant = 'dark',
           style={{ 
             fontSize: size >= 36 ? '1.35rem' : '1.15rem', 
             color: isLight ? '#0f172a' : '#D7E2EA',
-            fontFamily: "'Kanit', sans-serif"
+            fontFamily: "'Inter', sans-serif"
           }}
         >
           Match
-          <span className="bg-gradient-to-r from-[#7C5CFC] via-[#4DA3FF] to-[#7DE2FF] bg-clip-text text-transparent ml-0.5">
+          <span className="bg-gradient-to-r from-[#165fd0] via-[#4b91ec] to-[#9accff] bg-clip-text text-transparent ml-0.5">
             Cred
           </span>
         </span>

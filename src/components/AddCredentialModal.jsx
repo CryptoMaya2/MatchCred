@@ -107,7 +107,7 @@ export default function AddCredentialModal({ isOpen, onClose, onAdd, defaultName
               onChange={(e) => setStatus(e.target.value)}
             >
               <option value="Candidate submitted">Candidate submitted (Default)</option>
-              <option value="Institution verified">Institution verified</option>
+              <option value="Candidate submitted">Candidate submitted</option>
               <option value="Unverified">Unverified</option>
             </select>
             <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem', display: 'block' }}>

@@ -35,13 +35,13 @@ export default function Header({ currentScreen, setCurrentScreen, hasEvaluated, 
             tabIndex={0}
             title="Return to MatchCred Landing Page"
           >
-            <Logo size={36} variant="dark" />
+            <Logo size={36} variant="light" />
           </div>
 
           {onBackToLanding && (
             <button
               onClick={onBackToLanding}
-              className="text-xs font-mono font-medium text-[rgba(215,226,234,0.6)] hover:text-white px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex items-center gap-1 cursor-pointer"
+              className="text-xs font-mono font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded bg-slate-50 hover:bg-blue-50 border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span>←</span>
               <span>Overview</span>
