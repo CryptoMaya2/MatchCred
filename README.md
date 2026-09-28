@@ -1,89 +1,35 @@
 # MatchCred
 
-**Verify your eligibility before you apply.**  
-Instant credential verification, candidate CV extraction, and application preparation powered by GenLayer Studionet consensus.
+An eligibility assessment for jobs, scholarships, and fellowships. Candidates enter credentials or upload a CV, compare them with opportunity requirements, and review a preparation plan.
 
----
+## Current modes
 
-## Overview
+- **Local preview:** Works without a wallet or contract. Uses rule-based matching in the browser. Results are clearly marked as local.
+- **GenLayer consensus review:** Enabled by the deployed Studionet address in the application. Override with `VITE_GENLAYER_CONTRACT_ADDRESS` if deploying a newer version. Connects a wallet on Studionet, submits a write transaction, waits for finalization, then reads the stored review. Failed or rejected transactions show an error, never a fake verified result.
 
-MatchCred helps people check whether their qualifications and credentials meet the criteria of jobs, scholarships, fellowships, grants, and academic programs before submitting an application.
+**Important:** A candidate can type any qualification. MatchCred does not yet verify issuance with universities, licensing bodies, or employers. GenLayer consensus assesses supplied evidence against requirements; it does not establish whether the evidence is authentic. The onchain path sends manually entered credential names, issuers, years, statuses and requirements to a public chain. CV uploads are blocked from the onchain path because they can contain private information.
 
-### Key Capabilities
-
-1. **Flexible Entry Paths (Credentials, CV, or Both)**:
-   - **Option 1: Add Credentials**: Enter academic degrees, licenses, and certifications with verifiable institutional references.
-   - **Option 2: Upload CV**: Upload a CV in PDF or DOCX format (or paste text) to extract education, experience, skills, certifications, projects, volunteer work, and leadership.
-   - **Option 3: Use Both**: Combine CV-extracted experience and skills with verified institutional credentials.
-
-2. **Strict Verification Distinction**:
-   - `✓ Verified Credential`: Independently verified by issuing institutions.
-   - `📄 Candidate CV (Unverified)`: Self-reported claims extracted from applicant CVs.
-
-3. **Transparent Eligibility Decisions**:
-   - `MET`, `NOT MET`, and `UNCLEAR` statuses with explicit evidence sources for each requirement.
-
-4. **Experience Gap Analysis & "Help Me Prepare"**:
-   - Detects shortfalls (e.g. 2 years documented vs. 3 years required) and guides candidates through targeted questions to document missing experience, build an actionable roadmap, and generate a tailored application CV.
-
-5. **GenLayer Studionet Integration**:
-   - Connected to **GenLayer Studionet** (Chain ID: `61999`, RPC: `https://studio.genlayer.com/api`) for decentralized intelligent contract evaluation.
-
----
-
-## Tech Stack
-
-- **Frontend**: React, Vite, Framer Motion, Lucide React, Vanilla CSS
-- **Document Extraction**: `pdfjs-dist` (PDF), `mammoth` (DOCX)
-- **Web3 / Intelligent Contracts**: GenLayer Studionet SDK, Python Intelligent Contracts (`contracts/MatchCred.py`)
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v18+)
-- npm or yarn
-
-### Installation
+## Run locally
 
 ```bash
-git clone https://github.com/CryptoMaya2/MatchCred.git
-cd MatchCred
-npm install
-```
-
-### Environment Configuration
-
-Create a `.env` file based on `.env.example`:
-
-```bash
+npm ci
 cp .env.example .env
-```
-
-```env
-VITE_GENLAYER_NETWORK=studionet
-VITE_GENLAYER_CHAIN_ID=61999
-VITE_GENLAYER_RPC_URL=https://studio.genlayer.com/api
-```
-
-### Development Server
-
-```bash
 npm run dev
 ```
 
-Visit [http://localhost:5173](http://localhost:5173) in your browser.
+## Deploy the intelligent contract
 
-### Production Build
+The source is [`contracts/MatchCred.py`](contracts/MatchCred.py). The old `gl.llm_call` view implementation has been replaced with a state-changing function using `gl.nondet.exec_prompt` under `gl.eq_principle.prompt_comparative` and a read function to retrieve finalized decisions.
+
+1. Open [GenLayer Studio](https://studio.genlayer.com/) and connect the wallet that will own the deployment. Ensure the environment is **Studionet**, chain ID **61999**.
+2. Paste `contracts/MatchCred.py` into Studio and deploy. Wait for a successful finalized deployment, then copy the **contract address** from Studio. A source file or transaction hash alone is not a deployed address.
+3. Put `VITE_GENLAYER_CONTRACT_ADDRESS=0x...` in `.env` locally and in the frontend hosting environment. Rebuild the frontend (`npm run build`). Never commit private keys or seed phrases.
+4. Submit a short, non-sensitive credential and one requirement from two different wallets to verify `evaluate_requirements` and `get_review`; check the transaction in Studio. Validate the deployed schema if Studio reports an SDK or GenVM compatibility error.
+
+Deployment requires a funded, connected wallet. Studionet deployment `0xE93A364A11b8e41615042921798303a9FBa2132f` finalized and a sample consensus review finalized successfully. Studio may reset; use Bradbury for a persistent testnet submission after Studio validation, and update the frontend network configuration to Bradbury if deploying there.
+
+## Build
 
 ```bash
 npm run build
 ```
-
----
-
-## License
-
-MIT
