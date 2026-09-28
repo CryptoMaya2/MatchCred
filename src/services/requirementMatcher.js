@@ -160,7 +160,7 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
 
   // Helper to construct evidence metadata
   const makeEvidence = (cred, sourceOverride = null) => {
-    const isVerified = cred.status === 'Institution verified';
+    const isVerified = false; // No issuer integration exists; never promote a self-selected status.
     const source = sourceOverride || (isVerified ? 'Verified Credential' : 'Candidate Credential');
     const label = isVerified ? 'Verified credential' : 'Candidate-submitted credential';
     return {
@@ -170,7 +170,7 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
       evidence: {
         credentialName: cred.name,
         issuer: cred.issuer || 'Recognized Institution',
-        status: cred.status || 'Candidate submitted',
+        status: 'Candidate submitted (unverified)',
         year: cred.year || 'N/A',
         documentRef: cred.documentRef || null
       }
@@ -653,7 +653,7 @@ export function identifyApplicationStrengths(credentials = [], items = [], cvDat
           year: cred.year,
           status: cred.status,
           documentRef: cred.documentRef,
-          evidenceSource: cred.status === 'Institution verified' ? 'Verified Credential' : 'Candidate Credential',
+          evidenceSource: 'Candidate Credential',
           differentiatorNote: `Not required in the opportunity, but highly relevant and may strengthen your application as a distinct qualification.`
         });
       }
