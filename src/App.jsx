@@ -36,6 +36,7 @@ export default function App() {
   const [report, setReport] = useState(null);
   const [hasEvaluated, setHasEvaluated] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationError, setEvaluationError] = useState('');
 
   // Experience and preparation notes saved during "Help Me Prepare"
   const [savedExperiences, setSavedExperiences] = useState([]);
@@ -106,17 +107,14 @@ export default function App() {
   // Perform evaluation using GenLayer Studionet service
   const handleEvaluate = async () => {
     setIsEvaluating(true);
+    setEvaluationError('');
     try {
       const evalResult = await evaluateRequirementsViaGenLayer(credentials, requirementsText, cvData);
       setReport(evalResult);
       setHasEvaluated(true);
       setCurrentScreen('results');
     } catch (err) {
-      console.warn('GenLayer evaluation error, utilizing consensus fallback:', err);
-      const fallbackResult = evaluateRequirements(credentials, requirementsText, cvData);
-      setReport(fallbackResult);
-      setHasEvaluated(true);
-      setCurrentScreen('results');
+      setEvaluationError(err.message || 'Evaluation failed. Please try again.');
     } finally {
       setIsEvaluating(false);
     }
@@ -196,6 +194,7 @@ export default function App() {
             }}
             onClearPreset={handleClearPreset}
             onEvaluate={handleEvaluate}
+            evaluationError={evaluationError}
             isEvaluating={isEvaluating}
             onBack={() => setCurrentScreen('credentials')}
           />
