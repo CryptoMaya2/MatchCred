@@ -59,25 +59,49 @@ function getExpandedTokens(text) {
   return { rawTokens, expandedTokens: Array.from(expanded) };
 }
 
+export const DEGREE_LEVELS = {
+  doctorate: { rank: 5, label: "Doctorate / PhD", regex: /\b(ph\.?d|doctorate|doctoral|doctor\s+of)\b/i },
+  master: { rank: 4, label: "Master's Degree", regex: /\b(master|master's|masters|m\.?\s*sc|msc|m\.?\s*a|ma|mba|postgraduate)\b/i },
+  bachelor: { rank: 3, label: "Bachelor's Degree", regex: /\b(bachelor|bachelor's|bachelors|b\.?\s*sc|bsc|b\.?\s*a|ba|b\.?\s*tech|btech|b\.?\s*eng|beng|undergraduate)\b/i },
+  associate: { rank: 2, label: "Associate / Diploma", regex: /\b(associate|associate's|diploma|hnd|nd)\b/i },
+  high_school: { rank: 1, label: "High School Diploma", regex: /\b(high\s*school|secondary\s*school|ged|matric)\b/i }
+};
+
+export function getDegreeLevel(text) {
+  if (!text) return null;
+  if (DEGREE_LEVELS.high_school.regex.test(text)) {
+    return { level: 'high_school', rank: DEGREE_LEVELS.high_school.rank, label: DEGREE_LEVELS.high_school.label };
+  }
+  for (const [level, info] of Object.entries(DEGREE_LEVELS)) {
+    if (level === 'high_school') continue;
+    if (info.regex.test(text)) {
+      return { level, rank: info.rank, label: info.label };
+    }
+  }
+  return null;
+}
+
 /**
  * Categorizes whether a requirement is experience, certification, degree, or general
  */
 export function categorizeRequirement(requirement) {
   const r = requirement.toLowerCase();
-  if (
-    /\b(\d+|two|three|four|five)\s*(years?|yrs?|months?)\b/i.test(r) ||
-    /\b(experience|clinical experience|work history|track record|practice)\b/i.test(r)
-  ) {
-    return 'experience';
+  if (/\b(bachelor'?s?|master'?s?|doctorate|ph\.?d|degree|diploma|b\.?\s*sc|bsc|b\.?\s*a|ba|ms|m\.?\s*sc|msc|b\.?\s*tech|btech|b\.?\s*eng|beng|undergraduate|postgraduate)\b/i.test(r)) {
+    return 'degree';
   }
   if (
-    /\b(bls|cpr|acls|pals|certification|certificate|license|licensed|registered|credential)\b/i.test(r) &&
-    !/\b(degree|bachelor|master|phd)\b/i.test(r)
+    /\b(bls|cpr|acls|pals|certification|certificate|license|licensed|registered|credential|chartered)\b/i.test(r) &&
+    !/\b(degree|bachelor|master|phd|bsc|ba)\b/i.test(r)
   ) {
     return 'certification';
   }
-  if (/\b(bachelor|master|doctorate|phd|degree|diploma|bsc|ba|ms|msc)\b/i.test(r)) {
-    return 'degree';
+  if (
+    /\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s*(years?|yrs?|months?)\b/i.test(r) ||
+    /\b(experience|clinical experience|work history|track record|practice|background|hands-on|tenure)\b/i.test(r) ||
+    /^(led|lead|manage|managed|architect|architected|built|build|design|designed|implemented|implement|developed|develop|deployed|deploy|spearhead|spearheaded|migrated|migrate|configured|configure|orchestrated|supervised|administered)\b/i.test(r.trim()) ||
+    /\b(migration|deployment|containerization|architecture|development|administration|implementation)\b/i.test(r)
+  ) {
+    return 'experience';
   }
   return 'general';
 }
@@ -169,7 +193,7 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
       evidenceLabel: label,
       evidence: {
         credentialName: cred.name,
-        issuer: cred.issuer || 'Recognized Institution',
+        issuer: cred.issuer || 'Documented Credential',
         status: 'Candidate submitted (unverified)',
         year: cred.year || 'N/A',
         documentRef: cred.documentRef || null
@@ -178,86 +202,205 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
   };
 
   // ==========================================================================
-  // 1. EVALUATE EXPERIENCE REQUIREMENTS (Duration / Tenure)
+  // 1. EVALUATE EXPERIENCE REQUIREMENTS (Duration / Tenure & Specialized Tasks)
   // ==========================================================================
   if (category === 'experience') {
-    // Check credentials first for documented experience
-    const experienceCred = credentials.find(c => {
-      const cNorm = normalize(`${c.name} ${c.issuer || ''} ${c.documentRef || ''}`);
-      const hasDomainOrWork = /\b(work|experience|employment|clinical|software|engineering|design|leadership|management|community|research|marketing|business|analytics|healthcare|hospital|practice|residency|internship|fellowship|practicing|volunteer|industry)\b/i.test(cNorm);
-      const hasExperienceOrTenure = /\b(experience|practice|practicing|residency|internship|fellowship|years|months|history|tenure|track record)\b/i.test(cNorm);
-      return hasDomainOrWork && hasExperienceOrTenure;
-    });
+    const domainStopWords = [
+      'years', 'year', 'yrs', 'experience', 'desirable', 'preferred', 'required', 'proven',
+      'with', 'in', 'and', 'or', 'practical', 'demonstrated', 'ability', 'knowledge', 'history',
+      'hands-on', 'minimum', 'tenure', 'background', 'relevant', 'plus', 'field', 'work', 'working',
+      'position', 'role', 'equivalent'
+    ];
+    const domainTokens = cleanedReq
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 2 && !domainStopWords.includes(t));
 
-    if (experienceCred) {
-      const meta = makeEvidence(experienceCred);
-      return {
-        status: 'MET',
-        category,
-        reqType,
-        matchedCredential: experienceCred,
-        ...meta,
-        explanation: `Sufficient evidence: Documented experience "${experienceCred.name}" satisfies this requirement. Evidence: ${meta.evidenceLabel}.`
-      };
-    }
-
-    // Check CV data for experience
-    if (cvData && Array.isArray(cvData.experience) && cvData.experience.length > 0) {
-      const reqYearsMatch = cleanedReq.match(/\b(\d+)\+?\s*(years?|yrs?)\b/i);
-      const requiredYears = reqYearsMatch ? parseInt(reqYearsMatch[1], 10) : null;
-      const candidateYears = cvData.totalYearsExperience || cvData.experience[0]?.years || 1;
-      const primaryExp = cvData.experience[0];
-
-      // If specific duration required, perform gap analysis
-      if (requiredYears !== null) {
-        if (candidateYears >= requiredYears) {
+    // Helper: Find domain match across credentials and candidate CV
+    const findDomainEvidence = () => {
+      // 1. Check credentials
+      for (const cred of credentials) {
+        const cNorm = normalize(`${cred.name} ${cred.issuer || ''}`);
+        const matchesToken = domainTokens.some(t => cNorm.includes(t) || (SYNONYMS[t] && SYNONYMS[t].some(s => cNorm.includes(s))));
+        if (matchesToken) {
           return {
-            status: 'MET',
-            category,
-            reqType,
-            matchedCredential: null,
-            evidenceSource: 'Candidate CV',
-            evidenceType: 'cv',
-            evidenceLabel: 'Candidate CV',
-            evidence: {
-              credentialName: `${candidateYears} years experience (${primaryExp.role})`,
-              issuer: primaryExp.organization || 'Documented in CV',
-              status: 'Candidate CV',
-              year: primaryExp.duration || 'Documented',
-              documentRef: cvData.sourceFileName || 'Uploaded CV'
-            },
-            explanation: `Candidate CV documents ${candidateYears} years of experience as ${primaryExp.role} at ${primaryExp.organization}. (Evidence: Candidate CV)`
-          };
-        } else {
-          // Experience GAP detected!
-          const missingYears = requiredYears - candidateYears;
-          return {
-            status: 'UNCLEAR',
-            category,
-            reqType,
-            matchedCredential: null,
-            evidenceSource: 'Candidate CV (Gap Detected)',
-            evidenceType: 'cv-gap',
-            evidenceLabel: 'Candidate CV',
-            gap: {
-              requiredYears,
-              candidateYears,
-              missingYears
-            },
-            evidence: {
-              credentialName: `${candidateYears} of ${requiredYears} years documented`,
-              issuer: primaryExp.organization || 'Documented in CV',
-              status: 'Candidate CV (Gap Detected)',
-              year: primaryExp.duration || 'Documented',
-              documentRef: cvData.sourceFileName || 'Uploaded CV'
-            },
-            explanation: `Experience gap: Opportunity specifies ${requiredYears} years of experience, but candidate CV currently documents ${candidateYears} year${candidateYears === 1 ? '' : 's'}.`,
-            howToAddress: `Your CV lists ${candidateYears} year${candidateYears === 1 ? '' : 's'} of experience. If you have freelance work, internships, or unrecorded projects to help bridge the ${missingYears}-year gap, clarify them via "Help Me Prepare".`
+            type: 'credential',
+            label: cred.name,
+            source: cred.issuer || 'Documented Credential',
+            credential: cred
           };
         }
       }
 
-      // General experience requirement (no specific number of years)
+      if (!cvData) return null;
+
+      // 2. Check candidate skills
+      if (Array.isArray(cvData.skills)) {
+        for (const skill of cvData.skills) {
+          const sNorm = normalize(skill);
+          const matches = domainTokens.some(t => sNorm.includes(t) || t.includes(sNorm) || (SYNONYMS[t] && SYNONYMS[t].some(s => sNorm.includes(s))));
+          if (matches) {
+            return {
+              type: 'skill',
+              label: `Skill: ${skill}`,
+              source: 'Candidate CV',
+              detail: skill
+            };
+          }
+        }
+      }
+
+      // 3. Check candidate projects
+      if (Array.isArray(cvData.projects)) {
+        for (const proj of cvData.projects) {
+          const pNorm = normalize(`${proj.name} ${proj.description || ''} ${proj.tech || ''}`);
+          const matches = domainTokens.some(t => pNorm.includes(t) || (SYNONYMS[t] && SYNONYMS[t].some(s => pNorm.includes(s))));
+          if (matches) {
+            return {
+              type: 'project',
+              label: `Project: ${proj.name}`,
+              source: 'Candidate CV',
+              detail: proj.description || proj.name
+            };
+          }
+        }
+      }
+
+      // 4. Check candidate work experiences (role and description)
+      if (Array.isArray(cvData.experience)) {
+        for (const exp of cvData.experience) {
+          const eNorm = normalize(`${exp.role} ${exp.description || ''} ${exp.organization || ''}`);
+          const matches = domainTokens.some(t => eNorm.includes(t) || (SYNONYMS[t] && SYNONYMS[t].some(s => eNorm.includes(s))));
+          if (matches) {
+            return {
+              type: 'experience',
+              label: exp.role,
+              source: exp.organization || 'Documented in CV',
+              duration: exp.duration || 'Documented',
+              years: exp.years || 1,
+              detail: exp.description || exp.role
+            };
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const domainEvidence = domainTokens.length > 0 ? findDomainEvidence() : null;
+
+    // If specific domain/task was requested (e.g. cloud deployment, containerization, postgresql migration)
+    // but candidate has NO relevant skills, projects, experience, or credentials:
+    if (domainTokens.length > 0 && !domainEvidence) {
+      return {
+        status: 'NOT MET',
+        category,
+        reqType,
+        matchedCredential: null,
+        evidenceSource: 'No supporting record found',
+        evidenceType: 'none',
+        evidenceLabel: 'None',
+        evidence: null,
+        explanation: `Missing: Opportunity specifies experience in ${domainTokens.slice(0, 3).join(', ')}. Candidate CV and credentials do not document relevant skills, projects, or work history in this area.`,
+        howToAddress: reqType === 'Preferred'
+          ? 'This is a preferred advantage. If you have unrecorded hands-on experience, highlight it in your application CV.'
+          : 'Document relevant project accomplishments, hands-on tasks, or related skills in your application CV to bridge this gap.'
+      };
+    }
+
+    // Now evaluate duration / tenure
+    const reqYearsMatch = cleanedReq.match(/\b(\d+)\+?\s*(years?|yrs?)\b/i);
+    const reqMonthsMatch = cleanedReq.match(/\b(\d+)\+?\s*(months?|mos?)\b/i);
+    const requiredYears = reqYearsMatch ? parseInt(reqYearsMatch[1], 10) : (reqMonthsMatch ? parseFloat((parseInt(reqMonthsMatch[1], 10) / 12).toFixed(2)) : null);
+
+    const candidateYears = domainEvidence?.years || cvData?.totalYearsExperience || cvData?.experience?.[0]?.years || 1;
+    const primaryExp = cvData?.experience?.[0] || { role: 'Professional Experience', organization: 'Documented in CV', duration: `${candidateYears} years` };
+
+    if (requiredYears !== null) {
+      if (candidateYears >= requiredYears) {
+        const evName = domainEvidence ? domainEvidence.label : `${candidateYears} years experience (${primaryExp.role})`;
+        const evIssuer = domainEvidence?.source || primaryExp.organization || 'Documented in CV';
+        return {
+          status: 'MET',
+          category,
+          reqType,
+          matchedCredential: domainEvidence?.credential || null,
+          evidenceSource: 'Candidate CV',
+          evidenceType: 'cv',
+          evidenceLabel: 'Candidate CV',
+          evidence: {
+            credentialName: evName,
+            issuer: evIssuer,
+            status: 'Candidate CV',
+            year: primaryExp.duration || 'Documented',
+            documentRef: cvData?.sourceFileName || 'Uploaded CV'
+          },
+          explanation: `Candidate CV documents ${candidateYears} year${candidateYears === 1 ? '' : 's'} of relevant experience (${evName}). (Evidence: Candidate CV)`
+        };
+      } else {
+        // Experience GAP detected
+        const missingYears = parseFloat((requiredYears - candidateYears).toFixed(1));
+        return {
+          status: 'UNCLEAR',
+          category,
+          reqType,
+          matchedCredential: null,
+          evidenceSource: 'Candidate CV (Gap Detected)',
+          evidenceType: 'cv-gap',
+          evidenceLabel: 'Candidate CV',
+          gap: {
+            requiredYears,
+            candidateYears,
+            missingYears
+          },
+          evidence: {
+            credentialName: `${candidateYears} of ${requiredYears} years documented`,
+            issuer: primaryExp.organization || 'Documented in CV',
+            status: 'Candidate CV (Gap Detected)',
+            year: primaryExp.duration || 'Documented',
+            documentRef: cvData?.sourceFileName || 'Uploaded CV'
+          },
+          explanation: `Experience gap: Opportunity specifies ${requiredYears} years of experience, but candidate CV currently documents ${candidateYears} year${candidateYears === 1 ? '' : 's'}.`,
+          howToAddress: `Your CV lists ${candidateYears} year${candidateYears === 1 ? '' : 's'} of experience. If you have freelance work, internships, or unrecorded projects to help bridge the ${missingYears}-year gap, clarify them via "Help Me Prepare".`
+        };
+      }
+    }
+
+    // General experience with supporting domain evidence
+    if (domainEvidence) {
+      if (domainEvidence.type === 'credential') {
+        const meta = makeEvidence(domainEvidence.credential);
+        return {
+          status: 'MET',
+          category,
+          reqType,
+          matchedCredential: domainEvidence.credential,
+          ...meta,
+          explanation: `Credential "${domainEvidence.label}" fulfills this experience requirement. (Evidence: ${meta.evidenceLabel})`
+        };
+      }
+      return {
+        status: 'MET',
+        category,
+        reqType,
+        matchedCredential: null,
+        evidenceSource: 'Candidate CV',
+        evidenceType: 'cv',
+        evidenceLabel: 'Candidate CV',
+        evidence: {
+          credentialName: domainEvidence.label,
+          issuer: domainEvidence.source,
+          status: 'Candidate CV',
+          year: domainEvidence.duration || 'Documented',
+          documentRef: cvData?.sourceFileName || 'Uploaded CV'
+        },
+        explanation: `Candidate CV documents relevant experience: ${domainEvidence.label}. (Evidence: Candidate CV)`
+      };
+    }
+
+    // Fallback if no specific domain was extracted (pure tenure)
+    if (cvData && Array.isArray(cvData.experience) && cvData.experience.length > 0) {
       return {
         status: 'MET',
         category,
@@ -273,7 +416,7 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
           year: primaryExp.duration || 'Documented',
           documentRef: cvData.sourceFileName || 'Uploaded CV'
         },
-        explanation: `Candidate CV documents relevant practical experience in ${primaryExp.role}. (Evidence: Candidate CV)`
+        explanation: `Candidate CV documents relevant practical tenure in ${primaryExp.role}. (Evidence: Candidate CV)`
       };
     }
 
@@ -311,7 +454,7 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
         reqType,
         matchedCredential: cred,
         ...meta,
-        explanation: `Matches credential "${cred.name}" issued by ${cred.issuer || 'recognized institution'}. (Evidence: ${meta.evidenceLabel})`
+        explanation: `Matches credential "${cred.name}"${cred.issuer ? ` issued by ${cred.issuer}` : ''}. (Evidence: ${meta.evidenceLabel})`
       };
     }
 
@@ -341,24 +484,32 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
     }
 
     // 4. Academic degree matching
-    const isDegreeReq = /\b(bachelor|master|doctor|degree|diploma|certificate|undergraduate|postgraduate)\b/i.test(cleanedReq) || /\b(b\.?\s*sc|m\.?\s*sc|b\.?\s*a|m\.?\s*a)\b/i.test(cleanedReq);
-    const isDegreeCred = /\b(bachelor|master|doctor|degree|diploma|certificate|bsc|ba|ms|msc|undergraduate|postgraduate)\b/i.test(cred.name) || /\b(b\.?\s*sc|m\.?\s*sc|b\.?\s*a|m\.?\s*a)\b/i.test(cred.name);
+    const reqDegreeLevel = getDegreeLevel(cleanedReq);
+    const credDegreeLevel = getDegreeLevel(cred.name);
 
-    if (isDegreeReq && isDegreeCred) {
-      const fieldReqTokens = reqTokens.filter(t => !['bachelor', 'bachelors', 'degree', 'in', 'of', 'and', 'the', 'stem', 'field', 'related', 'discipline'].includes(t));
-      const fieldCredTokens = credTokens.filter(t => !['bachelor', 'bachelors', 'degree', 'science', 'arts', 'of', 'in', 'and'].includes(t));
-      const commonField = fieldReqTokens.filter(t => fieldCredTokens.includes(t) || credExpanded.includes(t));
+    if (credDegreeLevel && (category === 'degree' || reqDegreeLevel)) {
+      if (!reqDegreeLevel || credDegreeLevel.rank >= reqDegreeLevel.rank) {
+        const degreeStopWords = [
+          'bachelor', 'bachelors', "bachelor's", 'degree', 'degrees', 'in', 'of', 'and', 'the',
+          'undergraduate', 'postgraduate', 'master', 'masters', "master's", 'doctorate', 'phd',
+          'b.sc', 'bsc', 'ba', 'b.a', 'btech', 'diploma', 'certificate', 'equivalent',
+          'practical', 'experience', 'discipline', 'field', 'related', 'major', 'or', 'science', 'arts'
+        ];
+        const reqFieldTokens = reqTokens.filter(t => !degreeStopWords.includes(t) && t.length > 2);
+        const credFieldTokens = credTokens.filter(t => !degreeStopWords.includes(t) && t.length > 2);
+        const hasFieldMatch = reqFieldTokens.length === 0 || reqFieldTokens.some(t => credFieldTokens.includes(t) || credExpanded.includes(t) || (SYNONYMS[t] && SYNONYMS[t].some(s => credFieldTokens.includes(s))));
 
-      if (commonField.length > 0 || fieldReqTokens.length === 0) {
-        const meta = makeEvidence(cred);
-        return {
-          status: 'MET',
-          category,
-          reqType,
-          matchedCredential: cred,
-          ...meta,
-          explanation: `Your degree "${cred.name}" satisfies the ${cleanedReq} requirement. (Evidence: ${meta.evidenceLabel})`
-        };
+        if (hasFieldMatch) {
+          const meta = makeEvidence(cred);
+          return {
+            status: 'MET',
+            category: 'degree',
+            reqType,
+            matchedCredential: cred,
+            ...meta,
+            explanation: `Your degree "${cred.name}" satisfies the ${cleanedReq} requirement. (Evidence: ${meta.evidenceLabel})`
+          };
+        }
       }
     }
 
@@ -415,16 +566,32 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
   if (cvData) {
     // A. Academic Degree in CV
     if (category === 'degree' && Array.isArray(cvData.education) && cvData.education.length > 0) {
+      const reqDegreeLevel = getDegreeLevel(cleanedReq);
+      const degreeStopWords = [
+        'bachelor', 'bachelors', "bachelor's", 'degree', 'degrees', 'in', 'of', 'and', 'the',
+        'undergraduate', 'postgraduate', 'master', 'masters', "master's", 'doctorate', 'phd',
+        'b.sc', 'bsc', 'ba', 'b.a', 'btech', 'diploma', 'certificate', 'equivalent',
+        'practical', 'experience', 'discipline', 'field', 'related', 'major', 'or', 'science', 'arts'
+      ];
+      const reqFieldTokens = reqTokens.filter(t => !degreeStopWords.includes(t) && t.length > 2);
+
       for (const edu of cvData.education) {
-        const eduNorm = normalize(`${edu.degree} ${edu.institution || ''}`);
-        const fieldReqTokens = reqTokens.filter(t => !['bachelor', 'bachelors', 'degree', 'in', 'of', 'and', 'the', 'undergraduate', 'postgraduate'].includes(t));
-        const eduTokens = normalize(edu.degree).split(' ');
-        const matchesField = fieldReqTokens.length === 0 || fieldReqTokens.some(t => eduTokens.includes(t) || reqExpanded.includes(t));
+        const eduLevel = getDegreeLevel(edu.degree);
+        if (!eduLevel) continue;
+
+        // Strict degree level verification: High School Diploma (rank 1) CANNOT meet Bachelor's (rank 3)!
+        if (reqDegreeLevel && eduLevel.rank < reqDegreeLevel.rank) {
+          continue;
+        }
+
+        // Strict field check if specific major/field required
+        const eduTokens = normalize(`${edu.degree} ${edu.details || ''}`).split(' ');
+        const matchesField = reqFieldTokens.length === 0 || reqFieldTokens.some(t => eduTokens.includes(t) || (SYNONYMS[t] && SYNONYMS[t].some(s => eduTokens.includes(s))));
 
         if (matchesField) {
           return {
             status: 'MET',
-            category,
+            category: 'degree',
             reqType,
             matchedCredential: null,
             evidenceSource: 'Candidate CV',
@@ -432,15 +599,32 @@ function evaluateSingleRequirement(requirement, credentials = [], cvData = null)
             evidenceLabel: 'Candidate CV (Unverified)',
             evidence: {
               credentialName: edu.degree,
-              issuer: edu.institution || 'Reported in CV',
+              issuer: edu.institution || 'Documented in CV',
               status: 'Candidate CV (Unverified)',
               year: edu.year || 'Documented',
               documentRef: cvData.sourceFileName || 'Uploaded CV'
             },
-            explanation: `Candidate CV lists "${edu.degree}" from ${edu.institution}. Note: This is candidate-provided evidence and has not undergone independent institutional verification.`
+            explanation: `Candidate CV lists "${edu.degree}"${edu.institution ? ` from ${edu.institution}` : ''}. Note: This is candidate-provided evidence and has not undergone independent institutional verification.`
           };
         }
       }
+
+      // If candidate has education records but none satisfied the level or field
+      const candFirstEdu = cvData.education[0];
+      return {
+        status: 'NOT MET',
+        category: 'degree',
+        reqType,
+        matchedCredential: null,
+        evidenceSource: 'Candidate CV (Insufficient Degree Level or Field)',
+        evidenceType: 'none',
+        evidenceLabel: 'None',
+        evidence: null,
+        explanation: `Missing: Opportunity specifies ${reqDegreeLevel?.label || 'a degree'}${reqFieldTokens.length > 0 ? ` in ${reqFieldTokens.join(', ')}` : ''}. Candidate CV documents "${candFirstEdu.degree}", which does not satisfy the degree level or required field.`,
+        howToAddress: reqType === 'Preferred'
+          ? 'This is a preferred qualification; applicants meeting other criteria may still apply.'
+          : 'A qualifying degree or formal institutional credential is required for this position.'
+      };
     }
 
     // B. Certifications in CV
@@ -703,8 +887,8 @@ export const RECOMMENDED_OPPORTUNITY_CATALOG = [
     organization: 'Global Innovation Studio',
     location: 'Remote / Hybrid',
     type: 'Fellowship / Early Career',
-    whyRecommended: 'May align with your credentials, recognizing portfolio and digital design experience.',
-    matchingQualifications: ["Bachelor's Degree", 'Design Portfolio'],
+    whyRecommended: 'Recognizes portfolio and digital design experience with structured mentorship.',
+    targetQualifications: ["Bachelor's Degree", 'Design Portfolio'],
     notes: 'Structured mentorship program provided during initial 6 months.'
   },
   {
@@ -713,8 +897,8 @@ export const RECOMMENDED_OPPORTUNITY_CATALOG = [
     organization: 'Open Tech Collaborative',
     location: 'Remote',
     type: 'Full-time / Technology',
-    whyRecommended: 'May align with candidates holding computer science or web development credentials.',
-    matchingQualifications: ['B.Sc. Computer Science', 'Web Development Certification'],
+    whyRecommended: 'May align with candidates developing modern web applications.',
+    targetQualifications: ['B.Sc. Computer Science or Equivalent', 'Web Development Certification'],
     notes: 'Emphasizes practical project code and component architecture.'
   },
   {
@@ -723,9 +907,9 @@ export const RECOMMENDED_OPPORTUNITY_CATALOG = [
     organization: 'Commonwealth Foundation',
     location: 'International / Hybrid',
     type: 'Postgraduate Scholarship',
-    whyRecommended: 'May align with candidates combining an undergraduate degree with verified community leadership.',
-    matchingQualifications: ['Undergraduate Degree', 'Community Leadership Certificate'],
-    notes: 'Values interdisciplinary academic backgrounds.'
+    whyRecommended: 'Focuses on civic engagement and community leadership potential.',
+    targetQualifications: ['Undergraduate Degree', 'Community Leadership Certificate'],
+    notes: 'Values diverse academic and civic backgrounds.'
   }
 ];
 
@@ -778,7 +962,29 @@ export function evaluateRequirements(credentials = [], opportunityRequirements =
   const potentialDifferentiators = identifyApplicationStrengths(credentials, items, cvData);
 
   // Surface aligned opportunities if candidate has unmet requirements
-  const recommendedOpportunities = unmetCount > 0 ? RECOMMENDED_OPPORTUNITY_CATALOG : [];
+  // Calculate matching qualifications dynamically - NEVER claim candidate has credentials they lack!
+  const candidateHasDegree = (cvData?.education?.some(e => getDegreeLevel(e.degree)?.rank >= 3) || credentials.some(c => getDegreeLevel(c.name)?.rank >= 3));
+  const candidateHasDesign = (cvData?.skills?.some(s => /design|figma|ui|ux/i.test(s)) || credentials.some(c => /design/i.test(c.name)));
+  const candidateHasTech = (cvData?.skills?.some(s => /software|developer|javascript|python|react|web|code/i.test(s)) || credentials.some(c => /tech|software|developer/i.test(c.name)));
+  const candidateHasLeadership = (cvData?.leadership?.length > 0 || credentials.some(c => /lead|leadership|council/i.test(c.name)));
+
+  const recommendedOpportunities = unmetCount > 0 ? RECOMMENDED_OPPORTUNITY_CATALOG.map(opp => {
+    const matching = [];
+    if (opp.id === 'opp-rec-1') {
+      if (candidateHasDegree) matching.push("Bachelor's Degree");
+      if (candidateHasDesign) matching.push("Design Portfolio");
+    } else if (opp.id === 'opp-rec-2') {
+      if (candidateHasDegree) matching.push("B.Sc. Computer Science");
+      if (candidateHasTech) matching.push("Web Development Experience");
+    } else if (opp.id === 'opp-rec-3') {
+      if (candidateHasDegree) matching.push("Undergraduate Degree");
+      if (candidateHasLeadership) matching.push("Community Leadership Experience");
+    }
+    return {
+      ...opp,
+      matchingQualifications: matching
+    };
+  }) : [];
 
   return {
     totalRequirements: total,

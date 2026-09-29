@@ -158,15 +158,26 @@ export function extractStructuredCvData(rawText, sourceFileName = 'Uploaded CV')
   let currentSection = 'summary';
   const textLower = rawText.toLowerCase();
 
+  const sectionHeaders = {
+    education: /^(education|academic background|qualifications|academic history):?$/i,
+    experience: /^(experience|work experience|employment history|work history|professional experience|employment):?$/i,
+    skills: /^(skills|core competencies|technical skills|technical proficiencies|key skills):?$/i,
+    certifications: /^(certifications?|licenses?|licensure|certificates?):?$/i,
+    projects: /^(projects?|portfolio|personal projects?):?$/i,
+    volunteer: /^(volunteer|community service|outreach|charity):?$/i,
+    leadership: /^(leadership|extracurricular activities):?$/i
+  };
+
   // Known skill dictionaries across tech, design, business, leadership, and public health
   const SKILL_KEYWORDS = [
     'React', 'TypeScript', 'JavaScript', 'Python', 'Node.js', 'Next.js', 'HTML', 'CSS',
-    'Tailwind CSS', 'SQL', 'Git', 'AWS', 'Docker', 'GraphQL', 'REST API',
+    'Tailwind CSS', 'SQL', 'Git', 'AWS', 'Docker', 'GraphQL', 'REST API', 'PostgreSQL', 'MongoDB',
     'Figma', 'UI/UX Design', 'User Research', 'Wireframing', 'Prototyping', 'Design Systems',
     'Data Analysis', 'Financial Modeling', 'Spreadsheets', 'Excel', 'Tableau', 'Power BI',
     'Project Management', 'Agile', 'Scrum', 'Strategic Planning', 'Risk Assessment',
     'Public Health', 'Community Outreach', 'Epidemiology', 'Health Education',
-    'Team Leadership', 'Stakeholder Management', 'Public Speaking', 'Cross-Functional Collaboration'
+    'Team Leadership', 'Stakeholder Management', 'Public Speaking', 'Cross-Functional Collaboration',
+    'Customer Service', 'Cash Handling', 'POS Systems', 'Inventory Management', 'Sales'
   ];
 
   for (const skill of SKILL_KEYWORDS) {
@@ -176,34 +187,106 @@ export function extractStructuredCvData(rawText, sourceFileName = 'Uploaded CV')
     }
   }
 
-  // Parse lines for degree and education patterns
-  const degreeRegex = /\b(bachelor|master|phd|doctorate|b\.sc|m\.sc|b\.a|m\.a|btech|diploma|associate|bachelor's|master's)\b/i;
-  const institutionRegex = /\b(university|college|institute|academy|school|polytechnic)\b/i;
+  const degreeKeywordRegex = /\b(diploma|degree|bachelor|bachelor's|bachelors|master|master's|masters|phd|doctorate|doctor|b\.?\s*sc|m\.?\s*sc|b\.?\s*a|m\.?\s*a|btech|associate|ged|matric|high\s*school\s*diploma)\b/i;
+  const institutionRegex = /\b(university|college|institute|academy|polytechnic|high\s*school|school)\b/i;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Education detection
-    if (degreeRegex.test(line)) {
-      let inst = 'Recognized University';
-      for (let j = Math.max(0, i - 1); j <= Math.min(lines.length - 1, i + 2); j++) {
-        if (institutionRegex.test(lines[j]) && lines[j] !== line) {
-          inst = lines[j];
-          break;
+    // Check if line is a section header
+    let isHeader = false;
+    for (const [sec, regex] of Object.entries(sectionHeaders)) {
+      if (regex.test(line)) {
+        currentSection = sec;
+        isHeader = true;
+        break;
+      }
+    }
+    if (isHeader) continue;
+
+    // Skills section parsing
+    if (currentSection === 'skills' || /^(skills|technical skills|competencies):/i.test(line)) {
+      const cleanLine = line.replace(/^(skills|technical skills|competencies):/i, '');
+      const tokens = cleanLine.split(/[,;•|*]|\band\b/i).map(t => t.trim().replace(/^[-•*]\s*/, '')).filter(t => t.length > 1);
+      tokens.forEach(t => skillsSet.add(t));
+      continue;
+    }
+
+    // Education section or explicit degree line
+    if (currentSection === 'education' || degreeKeywordRegex.test(line)) {
+      const cleanLine = line.replace(/^(education|degree):\s*/i, '').replace(/^[•\-\*]\s*/, '').trim();
+
+      // If line is an institution for the previously added degree (e.g. "City High School")
+      if (education.length > 0 && !education[education.length - 1].institution && institutionRegex.test(cleanLine) && !degreeKeywordRegex.test(cleanLine)) {
+        education[education.length - 1].institution = cleanLine;
+        continue;
+      }
+
+      if (degreeKeywordRegex.test(cleanLine)) {
+        let inst = '';
+        let degName = cleanLine;
+
+        // Check if institution is inline (e.g. "B.Sc. in Computer Science | University of Lagos" or "... from University of Lagos")
+        const inlineSplit = cleanLine.split(/\s+[|–\-]\s+|\s+from\s+|\s+at\s+/i);
+        if (inlineSplit.length > 1 && institutionRegex.test(inlineSplit[1])) {
+          degName = inlineSplit[0].trim();
+          inst = inlineSplit[1].replace(/\(.*?\)/g, '').trim();
+        } else {
+          // Check subsequent or prior line
+          for (let j = Math.max(0, i - 1); j <= Math.min(lines.length - 1, i + 2); j++) {
+            if (j !== i && institutionRegex.test(lines[j]) && !degreeKeywordRegex.test(lines[j])) {
+              inst = lines[j].replace(/^[•\-\*]\s*/, '').trim();
+              break;
+            }
+          }
+        }
+        const yearMatch = cleanLine.match(/\b(19\d{2}|20\d{2})\b/) || (lines[i + 1] && lines[i + 1].match(/\b(19\d{2}|20\d{2})\b/));
+        education.push({
+          id: 'edu-' + education.length,
+          degree: degName,
+          institution: inst || '',
+          year: yearMatch ? yearMatch[0] : '',
+          details: 'Candidate-reported academic credential'
+        });
+      }
+      continue;
+    }
+
+    // Experience section parsing
+    if (currentSection === 'experience' || /^(experience|employment):/i.test(line)) {
+      const cleanLine = line.replace(/^(experience|employment):\s*/i, '').replace(/^[•\-\*]\s*/, '').trim();
+      if (cleanLine.length > 2) {
+        // Match "Role at Company (Duration)" or "Role | Company (Duration)" or "Role (Duration)"
+        const roleMatch = cleanLine.match(/^(.+?)(?:\s+(?:at|@|\||-)\s+([^(]+?))?(?:\s*\((.+?)\))?$/i);
+        if (roleMatch && roleMatch[1]) {
+          const role = roleMatch[1].trim();
+          const org = roleMatch[2] ? roleMatch[2].trim() : 'Documented Employer';
+          const dur = roleMatch[3] ? roleMatch[3].trim() : 'Documented';
+
+          let parsedYears = 1;
+          const monthM = dur.match(/(\d+)\s*(?:months?|mos?)/i);
+          const yearM = dur.match(/(\d+)\s*(?:years?|yrs?)/i);
+          if (monthM) {
+            parsedYears = parseFloat((parseInt(monthM[1], 10) / 12).toFixed(2));
+          } else if (yearM) {
+            parsedYears = parseInt(yearM[1], 10);
+          }
+
+          experience.push({
+            id: 'exp-' + experience.length,
+            role,
+            organization: org,
+            duration: dur,
+            years: parsedYears,
+            description: cleanLine
+          });
+          continue;
         }
       }
-      const yearMatch = line.match(/\b(19\d{2}|20\d{2})\b/);
-      education.push({
-        id: 'edu-' + education.length,
-        degree: line.replace(/^[•\-\*]\s*/, '').trim(),
-        institution: inst.replace(/^[•\-\*]\s*/, '').trim(),
-        year: yearMatch ? yearMatch[0] : '2024',
-        details: 'Candidate-reported academic degree'
-      });
     }
 
     // Certification detection
-    if (/\b(certificate|certified|certification|licence|license)\b/i.test(line) && !degreeRegex.test(line)) {
+    if (/\b(certificate|certified|certification|licence|license)\b/i.test(line) && !degreeKeywordRegex.test(line)) {
       const yearMatch = line.match(/\b(19\d{2}|20\d{2})\b/);
       certifications.push({
         id: 'cert-' + certifications.length,
@@ -233,7 +316,7 @@ export function extractStructuredCvData(rawText, sourceFileName = 'Uploaded CV')
       });
     }
 
-    if (/\b(lead|leader|president|director|chair|head of|coordinator|captain)\b/i.test(line) && !degreeRegex.test(line)) {
+    if (/\b(lead|leader|president|director|chair|head of|coordinator|captain)\b/i.test(line) && !degreeKeywordRegex.test(line)) {
       leadership.push({
         id: 'lead-' + leadership.length,
         role: line.slice(0, 50),
@@ -242,72 +325,72 @@ export function extractStructuredCvData(rawText, sourceFileName = 'Uploaded CV')
     }
   }
 
-  // Experience extraction & duration calculation
-  // Look for tenure phrases like "2 years", "3+ years", "2021 - 2024", etc.
-  const experienceBlocks = [];
-  const expYearMatches = rawText.match(/\b(\d+)\+?\s*(years?|yrs?)\s*(of\s*)?(experience|in|as|tenure)?\b/gi) || [];
+  // Calculate total years of experience from parsed blocks or text
   let totalYearsDetected = 0;
+  if (experience.length > 0) {
+    totalYearsDetected = experience.reduce((sum, e) => sum + (e.years || 0), 0);
+  } else {
+    // Fallback: look for tenure phrases like "2 years", "6 months", "3+ years", "2021 - 2024"
+    const expYearMatches = rawText.match(/\b(\d+)\+?\s*(years?|yrs?)\s*(of\s*)?(experience|in|as|tenure)?\b/gi) || [];
+    for (const match of expYearMatches) {
+      const num = parseInt(match.match(/\d+/)[0], 10);
+      if (!isNaN(num) && num > 0 && num < 50) {
+        totalYearsDetected = Math.max(totalYearsDetected, num);
+      }
+    }
 
-  for (const match of expYearMatches) {
-    const num = parseInt(match.match(/\d+/)[0], 10);
-    if (!isNaN(num) && num > 0 && num < 50) {
-      totalYearsDetected = Math.max(totalYearsDetected, num);
+    const expMonthMatches = rawText.match(/\b(\d+)\+?\s*(months?|mos?)\s*(of\s*)?(experience|in|as|tenure)?\b/gi) || [];
+    for (const match of expMonthMatches) {
+      const num = parseInt(match.match(/\d+/)[0], 10);
+      if (!isNaN(num) && num > 0) {
+        totalYearsDetected = Math.max(totalYearsDetected, parseFloat((num / 12).toFixed(2)));
+      }
+    }
+
+    // Date ranges (e.g. 2022 - 2024, 2021 - Present)
+    const dateRangeRegex = /\b(20\d{2}|19\d{2})\s*(?:-|–|to)\s*(20\d{2}|present|current)\b/gi;
+    let rangeMatch;
+    while ((rangeMatch = dateRangeRegex.exec(rawText)) !== null) {
+      const startYear = parseInt(rangeMatch[1], 10);
+      const endYear = rangeMatch[2].toLowerCase() === 'present' || rangeMatch[2].toLowerCase() === 'current'
+        ? new Date().getFullYear()
+        : parseInt(rangeMatch[2], 10);
+      const diff = Math.max(1, endYear - startYear);
+      totalYearsDetected = Math.max(totalYearsDetected, diff);
+    }
+
+    // Detect roles across broader job types (tech, retail, service, design, business, health)
+    const commonRoles = [
+      'Frontend Developer', 'Software Engineer', 'Web Developer', 'Full-Stack Developer',
+      'Product Designer', 'UI/UX Designer', 'Product Manager', 'Business Analyst',
+      'Data Analyst', 'Project Coordinator', 'Community Health Coordinator', 'Research Assistant',
+      'Cashier', 'Customer Service Representative', 'Sales Associate', 'Barista', 'Store Associate'
+    ];
+
+    for (const role of commonRoles) {
+      if (new RegExp(`\\b${role}\\b`, 'i').test(rawText)) {
+        experience.push({
+          id: 'exp-' + experience.length,
+          role,
+          organization: 'Documented in CV',
+          duration: totalYearsDetected > 0 ? (totalYearsDetected < 1 ? `${Math.round(totalYearsDetected * 12)} months` : `${totalYearsDetected} years`) : 'Documented',
+          years: totalYearsDetected > 0 ? totalYearsDetected : 1,
+          description: `Candidate reported experience as ${role} in CV.`
+        });
+        break;
+      }
     }
   }
 
-  // Look for date ranges (e.g. 2022 - 2024, 2021 - Present)
-  const dateRangeRegex = /\b(20\d{2}|19\d{2})\s*(?:-|–|to)\s*(20\d{2}|present|current)\b/gi;
-  let rangeMatch;
-  while ((rangeMatch = dateRangeRegex.exec(rawText)) !== null) {
-    const startYear = parseInt(rangeMatch[1], 10);
-    const endYear = rangeMatch[2].toLowerCase() === 'present' || rangeMatch[2].toLowerCase() === 'current'
-      ? new Date().getFullYear()
-      : parseInt(rangeMatch[2], 10);
-    const diff = Math.max(1, endYear - startYear);
-    totalYearsDetected = Math.max(totalYearsDetected, diff);
-  }
-
-  // Detect roles
-  const commonRoles = [
-    'Frontend Developer', 'Software Engineer', 'Web Developer', 'Full-Stack Developer',
-    'Product Designer', 'UI/UX Designer', 'Product Manager', 'Business Analyst',
-    'Data Analyst', 'Project Coordinator', 'Community Health Coordinator', 'Research Assistant'
-  ];
-
-  for (const role of commonRoles) {
-    if (new RegExp(`\\b${role}\\b`, 'i').test(rawText)) {
-      experience.push({
-        id: 'exp-' + experience.length,
-        role,
-        organization: 'Documented Employer / Client',
-        duration: totalYearsDetected > 0 ? `${totalYearsDetected} years` : '1+ years',
-        years: totalYearsDetected > 0 ? totalYearsDetected : 1,
-        description: `Candidate reported ${totalYearsDetected || 1} years of experience as ${role} in CV.`
-      });
-      break;
-    }
-  }
-
-  // If no specific role was parsed but years or general work was mentioned
+  // If experience array is still empty but tenure was found
   if (experience.length === 0 && totalYearsDetected > 0) {
     experience.push({
       id: 'exp-0',
       role: 'Professional Experience',
       organization: 'Reported in CV',
-      duration: `${totalYearsDetected} years`,
+      duration: totalYearsDetected < 1 ? `${Math.round(totalYearsDetected * 12)} months` : `${totalYearsDetected} years`,
       years: totalYearsDetected,
-      description: `${totalYearsDetected} years documented professional tenure in candidate CV.`
-    });
-  }
-
-  // Default fallbacks if empty so candidate can easily review and edit
-  if (education.length === 0 && /\b(bachelor|degree|bsc|ba)\b/i.test(rawText)) {
-    education.push({
-      id: 'edu-0',
-      degree: "Bachelor's Degree",
-      institution: 'University / Higher Institution',
-      year: '2024',
-      details: 'Reported in CV'
+      description: `${totalYearsDetected} years documented tenure in candidate CV.`
     });
   }
 

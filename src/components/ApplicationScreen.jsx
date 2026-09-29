@@ -264,7 +264,7 @@ ${skillsText}
               {educationCreds.map(cred => (
                 <li key={cred.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#f8fafc', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                   <div>
-                    <strong style={{ color: '#0f172a' }}>{cred.name}</strong> — {cred.issuer} ({cred.year})
+                    <strong style={{ color: '#0f172a' }}>{cred.name}</strong>{cred.issuer ? ` — ${cred.issuer}` : ''} {cred.year ? `(${cred.year})` : ''}
                     {cred.documentRef && (
                       <span style={{ fontSize: '0.8rem', color: '#2563eb', marginLeft: '0.5rem' }}>
                         Doc: {cred.documentRef}
@@ -281,7 +281,7 @@ ${skillsText}
               {(cvData?.education || []).map((edu, idx) => (
                 <li key={'cvedu-' + idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#f8fafc', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                   <div>
-                    <strong style={{ color: '#0f172a' }}>{edu.degree}</strong> — {edu.institution} {edu.year ? `(${edu.year})` : ''}
+                    <strong style={{ color: '#0f172a' }}>{edu.degree}</strong>{edu.institution ? ` — ${edu.institution}` : ''} {edu.year ? `(${edu.year})` : ''}
                   </div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
                     📄 Candidate CV (Unverified)

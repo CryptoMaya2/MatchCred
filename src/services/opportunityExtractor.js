@@ -79,6 +79,8 @@ export async function extractOpportunityFromUrl(url) {
     if (source.pattern.test(cleanUrl)) {
       return {
         success: true,
+        isSampleData: true,
+        sourceType: 'sample',
         title: source.title,
         organization: source.organization,
         description: source.description,
@@ -125,6 +127,8 @@ export async function extractOpportunityFromUrl(url) {
 
     return {
       success: true,
+      isSampleData: false,
+      sourceType: 'live',
       title: parsedTitle,
       organization: 'Opportunity Host',
       description: 'Extracted from ' + cleanUrl,

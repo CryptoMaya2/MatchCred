@@ -46,7 +46,12 @@ export default function RequirementsScreen({
     if (result.success) {
       if (result.title) setOpportunityTitle(result.title);
       if (result.requirementsText) setRequirementsText(result.requirementsText);
-      setExtractSuccess(`Extracted ${result.rawExtractedCount} requirements for "${result.title}" (${result.organization || 'Organization'}).`);
+      setExtractSuccess({
+        isSample: !!result.isSampleData,
+        title: result.title,
+        org: result.organization || 'Opportunity Host',
+        count: result.rawExtractedCount || 0
+      });
     } else {
       setExtractError(result.error || 'Failed to extract opportunity details from link.');
     }
@@ -137,14 +142,14 @@ export default function RequirementsScreen({
 
           {/* Quick Demo Links */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem', fontSize: '0.8rem' }}>
-            <span style={{ fontWeight: 600, color: '#64748b' }}>Try Public Examples:</span>
+            <span style={{ fontWeight: 600, color: '#64748b' }}>Try Public Examples (Curated Sample Data):</span>
             <button
               type="button"
               className="btn btn-ghost btn-sm"
               style={{ fontSize: '0.75rem', textDecoration: 'underline', color: '#2563eb' }}
               onClick={() => handleUseDemoLink('https://foundation.org/scholarships/global-leadership-2025')}
             >
-              Global Leadership Postgraduate Scholarship
+              [Sample] Postgraduate Scholarship
             </button>
             <button
               type="button"
@@ -152,7 +157,7 @@ export default function RequirementsScreen({
               style={{ fontSize: '0.75rem', textDecoration: 'underline', color: '#2563eb' }}
               onClick={() => handleUseDemoLink('https://careers.example.tech/jobs/frontend-engineer-react')}
             >
-              Frontend Software Engineer
+              [Sample] Frontend Software Engineer
             </button>
             <button
               type="button"
@@ -160,7 +165,7 @@ export default function RequirementsScreen({
               style={{ fontSize: '0.75rem', textDecoration: 'underline', color: '#2563eb' }}
               onClick={() => handleUseDemoLink('https://fellowships.example.org/design-innovation-2025')}
             >
-              Product Design Fellowship
+              [Sample] Product Design Fellowship
             </button>
             <button
               type="button"
@@ -168,14 +173,30 @@ export default function RequirementsScreen({
               style={{ fontSize: '0.75rem', textDecoration: 'underline', color: '#64748b' }}
               onClick={() => handleUseDemoLink('https://restricted-internal-portal.example.com/login-required')}
             >
-              Simulate Restricted Link
+              [Test] Simulate Blocked URL
             </button>
           </div>
 
           {/* Extraction Feedback */}
           {extractSuccess && (
-            <div style={{ padding: '0.75rem 1rem', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', color: '#065f46', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-              ✓ <strong>Requirements Extracted!</strong> {extractSuccess} Review or modify extracted details below.
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: extractSuccess.isSample ? '#eff6ff' : '#ecfdf5',
+              border: `1px solid ${extractSuccess.isSample ? '#bfdbfe' : '#a7f3d0'}`,
+              borderRadius: '8px',
+              color: extractSuccess.isSample ? '#1e40af' : '#065f46',
+              fontSize: '0.875rem',
+              marginTop: '0.5rem'
+            }}>
+              {extractSuccess.isSample ? (
+                <>
+                  📋 <strong>Curated Sample Data Loaded:</strong> Loaded {extractSuccess.count} requirements for "{extractSuccess.title}" ({extractSuccess.org}). <em>Note: This is curated benchmark sample data for demonstration, not a live network fetch.</em>
+                </>
+              ) : (
+                <>
+                  ✓ <strong>Live Requirements Extracted!</strong> Extracted {extractSuccess.count} requirements for "{extractSuccess.title}" ({extractSuccess.org}). Review or modify details below.
+                </>
+              )}
             </div>
           )}
 
