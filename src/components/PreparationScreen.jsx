@@ -47,23 +47,23 @@ export default function PreparationScreen({
     const newExp = {
       id: 'exp-' + Date.now(),
       requirement: reqName,
-      type: data.type || 'Relevant Clinical Experience',
-      where: data.where || 'Healthcare Facility',
-      duration: data.duration || '2 years',
-      duties: data.duties || 'Provided direct patient care and clinical services.'
+      type: data.type || 'Relevant Professional Experience',
+      where: data.where || 'Documented Employer / Project',
+      duration: data.duration || 'Documented Tenure',
+      duties: data.duties || 'Demonstrated practical responsibilities and deliverables.'
     };
 
     setSavedExperiences(prev => [...prev, newExp]);
     onSaveExperience(newExp);
 
-    // Also add to candidate credentials as clinical experience claim
+    // Also add to candidate credentials as documented experience record
     onAddCredential({
       id: 'cred-exp-' + Date.now(),
-      name: `${data.duration || '2 Years'} ${data.type || 'Clinical Experience'} (${data.where || 'Healthcare'})`,
-      issuer: data.where || 'Clinical Practice',
+      name: `${data.duration || 'Documented'} ${data.type || 'Professional Experience'} (${data.where || 'Project'})`,
+      issuer: data.where || 'Documented Experience',
       year: new Date().getFullYear().toString(),
       status: 'Candidate submitted',
-      documentRef: `Duties: ${data.duties || 'Direct clinical duties'}`
+      documentRef: `Responsibilities: ${data.duties || 'Practical achievements'}`
     });
 
     setExperienceResponses(prev => ({
@@ -217,11 +217,11 @@ export default function PreparationScreen({
                             </div>
 
                             <div className="form-group">
-                              <label className="form-label">What did you do? (Key clinical duties)</label>
+                              <label className="form-label">What did you do? (Key responsibilities &amp; accomplishments)</label>
                               <textarea
                                 className="form-input"
                                 style={{ minHeight: '70px' }}
-                                placeholder="e.g. Administered medications, monitored vital signs, assisted surgical triage, documented EHR."
+                                placeholder="e.g. Led database migration, engineered component architecture, coordinated team outreach, or delivered project milestones."
                                 value={expData.duties || ''}
                                 onChange={(e) => handleExperienceFieldChange(item.requirement, 'duties', e.target.value)}
                               />
@@ -309,22 +309,50 @@ export default function PreparationScreen({
                   </div>
                 )}
 
-                {/* GENERAL / DEGREE TARGETED QUESTION */}
-                {!isExperience && !isCertification && (
+                {/* DEGREE TARGETED QUESTION */}
+                {item.category === 'degree' && (
                   <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                     <p style={{ fontWeight: 600, color: '#1e293b', marginBottom: '0.5rem' }}>
-                      Do you have a related qualification or equivalent certification for: "{item.requirement}"?
+                      Do you hold an accredited degree or institutional diploma for: "{item.requirement}"?
                     </p>
                     <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
-                      If you have an unlisted diploma, course certificate, or foreign equivalent credential, you can add it directly:
+                      If you have an unlisted university degree, transcript, or equivalent academic diploma, you can add it directly:
                     </p>
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
                       onClick={() => setAddingCertReq(item.requirement)}
                     >
-                      + Add Related Credential
+                      + Add Academic Degree
                     </button>
+                  </div>
+                )}
+
+                {/* GENERAL / PRACTICAL SKILL TARGETED QUESTION */}
+                {!isExperience && !isCertification && item.category !== 'degree' && (
+                  <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <p style={{ fontWeight: 600, color: '#1e293b', marginBottom: '0.5rem' }}>
+                      Do you have practical project experience or skills demonstrating: "{item.requirement}"?
+                    </p>
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                      You can document this as practical project experience or add an accredited credential:
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleExperienceChoice(item.requirement, true)}
+                      >
+                        + Document Practical Experience
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setAddingCertReq(item.requirement)}
+                      >
+                        + Add Credential
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
