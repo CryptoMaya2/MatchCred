@@ -7,6 +7,7 @@ An eligibility assessment for jobs, scholarships, and fellowships. Candidates en
 - **Local preview:** Works without a wallet or contract. Uses rule-based matching in the browser. Results are clearly marked as local.
 - **Simulated Alexa+ experience (`/alexa`):** An ambient voice-and-screen interface simulating Alexa+ smart display interactions (no official Alexa SDK required). Users can tap or ask *"Alexa, do I qualify for this fellowship?"*. The interface verifies if credentials or opportunity text are present (prompting for them only if not already loaded), evaluates eligibility via MatchCred's matching engine, and presents plus speaks the verdict (percent match, met, unclear, not met, and next steps) using browser speech synthesis with a complete text fallback. Includes a one-click *"Try the example"* flow wired to the sample fellowship.
 - **GenLayer consensus review:** Enabled by the deployed Studionet address in the application. Override with `VITE_GENLAYER_CONTRACT_ADDRESS` if deploying a newer version. Connects a wallet on Studionet, submits a write transaction, waits for finalization, then reads the stored review. Failed or rejected transactions show an error, never a fake verified result.
+- **Nebius Token Factory (NVIDIA Nemotron):** Third evaluation mode built for the *Nebius x NVIDIA Global AI Hackathon (Best Apps and Agents)*. Calls an NVIDIA open model served on Nebius Token Factory (`nvidia/Nemotron-3-Ultra-550b-a55b`) via the secure server route `/api/nebius-match`. Returns structured JSON containing percent match, requirement evidence sentences, and actionable next steps.
 
 **Important:** A candidate can type any qualification. MatchCred does not yet verify issuance with universities, licensing bodies, or employers. GenLayer consensus assesses supplied evidence against requirements; it does not establish whether the evidence is authentic. The onchain path sends manually entered credential names, issuers, years, statuses and requirements to a public chain. CV uploads are blocked from the onchain path because they can contain private information.
 
@@ -46,8 +47,74 @@ The source is [`contracts/MatchCred.py`](contracts/MatchCred.py). The old `gl.ll
 
 Deployment requires a funded, connected wallet. Studionet deployment `0xE93A364A11b8e41615042921798303a9FBa2132f` finalized and a sample consensus review finalized successfully. Studio may reset; use Bradbury for a persistent testnet submission after Studio validation, and update the frontend network configuration to Bradbury if deploying there.
 
+## Nebius Token Factory
+
+MatchCred includes an evaluation path integrated with **Nebius Token Factory**, built for the **Nebius x NVIDIA Global AI Hackathon (Track: Best Apps and Agents)**.
+
+- **Primary Reasoning Model:** `nvidia/Nemotron-3-Ultra-550b-a55b`
+- **Fallback Resolution:** If the primary ID is not recognized, the server queries `GET https://api.tokenfactory.nebius.com/v1/models` and selects the listed Nemotron 3 Ultra, Nemotron 3 Super, or Nemotron 3.5 Lightning ID.
+- **Server Route:** `POST /api/nebius-match`
+- **OpenAI-Compatible Base URL:** `https://api.tokenfactory.nebius.com/v1/`
+- **Security:** `NEBIUS_API_KEY` is read strictly on the server (never exposed to the browser, never committed).
+
+### How to Run One Match with Nemotron
+
+1. **Configure your API key** in `.env` locally (or in your hosting provider's environment variables):
+   ```bash
+   NEBIUS_API_KEY=your_nebius_token_factory_key
+   ```
+2. **Start the local server:**
+   ```bash
+   npm run dev
+   ```
+3. **Run via the Web UI:**
+   - Open `http://localhost:5173`
+   - Click **Check your eligibility** and add credentials or load the sample fellowship.
+   - On either the **Opportunity Requirements** screen or the **Eligibility Evaluation Report**, click the **"Match with Nemotron on Nebius ⚡"** button.
+   - The screen will display:
+     - Provider: **Nebius Token Factory**
+     - Model ID: `nvidia/Nemotron-3-Ultra-550b-a55b` (or listed Nemotron ID)
+     - API Endpoint: `https://api.tokenfactory.nebius.com/v1/chat/completions`
+     - Evaluated criteria with evidence sentences and recommended next steps.
+   - If the key is missing or invalid, an explicit error banner is displayed. MatchCred **never** silently falls back to the local matcher when Nebius is requested.
+
+4. **Run via cURL (Direct API verification):**
+   ```bash
+   curl -X POST http://localhost:5173/api/nebius-match \
+     -H "Content-Type: application/json" \
+     -d '{
+       "opportunityTitle": "Product Design Fellowship",
+       "requirementsText": "* Bachelor degree in Design or related field\n* 1+ years UX prototyping experience",
+       "credentials": [
+         { "name": "Bachelor of Arts in Design", "issuer": "National Design Academy", "year": "2024", "status": "Institution verified" }
+       ]
+     }'
+   ```
+   The network response returns:
+   ```json
+   {
+     "success": true,
+     "provider": "Nebius Token Factory",
+     "apiUrl": "https://api.tokenfactory.nebius.com/v1/chat/completions",
+     "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+     "report": {
+       "percentMatch": 50,
+       "matchedCount": 1,
+       "unclearCount": 0,
+       "unmetCount": 1,
+       "items": [ ... ],
+       "nextStep": "..."
+     }
+   }
+   ```
+
 ## Build
 
 ```bash
 npm run build
 ```
+
+## License
+
+This project is licensed under the terms of the [MIT License](LICENSE).
+

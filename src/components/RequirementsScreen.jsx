@@ -14,6 +14,9 @@ export default function RequirementsScreen({
   onEvaluate,
   isEvaluating,
   evaluationError,
+  onEvaluateNebius,
+  isNebiusEvaluating = false,
+  nebiusError = '',
   onBack
 }) {
   // Input Method: 'paste' (Option A) or 'link' (Option B)
@@ -337,31 +340,79 @@ export default function RequirementsScreen({
       </div>
 
       {/* Navigation Buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={onBack}
-        >
-          ← Back to Credentials
-        </button>
+      <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
+        {(evaluationError || nebiusError) && (
+          <div role="alert" style={{
+            background: '#fef2f2',
+            border: '1px solid #f87171',
+            borderRadius: '8px',
+            padding: '0.65rem 0.95rem',
+            color: '#991b1b',
+            fontSize: '0.88rem',
+            marginBottom: '1rem'
+          }}>
+            <strong>Error:</strong> {nebiusError || evaluationError}
+          </div>
+        )}
 
-        {evaluationError && <p role="alert" style={{ color: '#f87171', marginBottom: '1rem' }}>{evaluationError}</p>}
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={onEvaluate}
-          disabled={parsedRequirements.length === 0 || isEvaluating}
-        >
-          {isEvaluating ? (
-            <>
-              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
-              {CONTRACT_READY ? 'Waiting for GenLayer consensus...' : 'Building local preview...'}
-            </>
-          ) : (
-            CONTRACT_READY ? 'Submit public GenLayer review →' : 'Generate local eligibility preview →'
-          )}
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onBack}
+          >
+            ← Back to Credentials
+          </button>
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {onEvaluateNebius && (
+              <button
+                type="button"
+                className="btn"
+                onClick={onEvaluateNebius}
+                disabled={parsedRequirements.length === 0 || isEvaluating || isNebiusEvaluating}
+                style={{
+                  background: 'linear-gradient(135deg, #76b900 0%, #1e293b 100%)',
+                  color: '#ffffff',
+                  border: '1px solid #76b900',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(118, 185, 0, 0.25)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                title="Evaluate with NVIDIA Nemotron on Nebius Token Factory"
+              >
+                {isNebiusEvaluating ? (
+                  <>
+                    <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
+                    <span>Evaluating on Nebius...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⚡ Match with Nemotron on Nebius</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onEvaluate}
+              disabled={parsedRequirements.length === 0 || isEvaluating || isNebiusEvaluating}
+            >
+              {isEvaluating ? (
+                <>
+                  <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
+                  {CONTRACT_READY ? 'Waiting for GenLayer consensus...' : 'Building local preview...'}
+                </>
+              ) : (
+                CONTRACT_READY ? 'Submit public GenLayer review →' : 'Generate local eligibility preview →'
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

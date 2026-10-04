@@ -8,12 +8,27 @@ export default function ResultsScreen({
   onHelpMePrepare,
   onEditRequirements,
   onEditCredentials,
-  onReset
+  onReset,
+  onEvaluateNebius,
+  isNebiusEvaluating = false,
+  nebiusError = ''
 }) {
   const [showGenLayerInfo, setShowGenLayerInfo] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState('studionet');
   const [connectionStatus, setConnectionStatus] = useState(null);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [localNebiusError, setLocalNebiusError] = useState('');
+
+  const handleTriggerNebius = async () => {
+    setLocalNebiusError('');
+    try {
+      if (onEvaluateNebius) {
+        await onEvaluateNebius();
+      }
+    } catch (err) {
+      setLocalNebiusError(err.message || 'Nebius Token Factory evaluation failed.');
+    }
+  };
 
   if (!report || !report.items) {
     return (
@@ -51,16 +66,76 @@ export default function ResultsScreen({
 
   return (
     <div>
-      <div className="screen-header">
-        <h2 className="screen-title">Eligibility Evaluation Report</h2>
-        <p className="screen-subtitle">
-          {opportunityTitle ? (
-            <span>Eligibility assessment for <strong>{opportunityTitle}</strong></span>
-          ) : (
-            'Eligibility assessment results based on candidate-submitted information.'
-          )}
-        </p>
+      <div className="screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 className="screen-title">Eligibility Evaluation Report</h2>
+          <p className="screen-subtitle">
+            {opportunityTitle ? (
+              <span>Eligibility assessment for <strong>{opportunityTitle}</strong></span>
+            ) : (
+              'Eligibility assessment results based on candidate-submitted information.'
+            )}
+          </p>
+        </div>
+
+        {/* Action Button: Match with Nemotron on Nebius */}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleTriggerNebius}
+            disabled={isNebiusEvaluating}
+            style={{
+              background: 'linear-gradient(135deg, #76b900 0%, #1e293b 100%)',
+              color: '#ffffff',
+              border: '1px solid #76b900',
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              padding: '0.55rem 1.15rem',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(118, 185, 0, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            {isNebiusEvaluating ? (
+              <>
+                <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
+                <span>Evaluating on Nebius...</span>
+              </>
+            ) : (
+              <>
+                <span>⚡ Match with Nemotron on Nebius</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Nebius Evaluation Error Banner (Never silently fall back to local) */}
+      {(localNebiusError || nebiusError) && (
+        <div role="alert" style={{
+          background: '#fef2f2',
+          border: '1px solid #f87171',
+          borderRadius: '10px',
+          padding: '0.85rem 1.15rem',
+          color: '#991b1b',
+          fontSize: '0.88rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.65rem'
+        }}>
+          <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+          <div>
+            <strong>Nebius Token Factory Error:</strong> {localNebiusError || nebiusError}
+            <div style={{ fontSize: '0.78rem', color: '#b91c1c', marginTop: '0.25rem' }}>
+              Note: This evaluation was NOT performed on Nebius. Please verify that <code>NEBIUS_API_KEY</code> is set in your server environment variables.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Scorecard */}
       <div className="results-summary-card">
@@ -93,12 +168,39 @@ export default function ResultsScreen({
             )}
           </div>
 
-          <div style={{ marginTop: '0.85rem', fontSize: '0.82rem', color: report.genLayerVerified ? '#08734e' : '#965b09' }}>
-            {report.genLayerVerified ? '⛓️ Consensus reviewed on GenLayer Studionet' : '◌ Local eligibility preview · No onchain review'}
-            {report.transactionHash && <div style={{ marginTop: '0.4rem' }}>Transaction: <code style={{ overflowWrap: 'anywhere' }}>{report.transactionHash}</code></div>}
-            {report.contractAddress && <div>Contract: <code>{report.contractAddress}</code></div>}
-            <div style={{ marginTop: '0.4rem', opacity: 0.8 }}>Self-reported credentials are not authenticated by an issuer.</div>
-          </div>
+          {/* Verification Badge: Nebius Token Factory Proof vs GenLayer vs Local */}
+          {report.nebiusVerified ? (
+            <div style={{
+              marginTop: '0.85rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              background: 'rgba(118, 185, 0, 0.08)',
+              border: '1px solid rgba(118, 185, 0, 0.35)',
+              fontSize: '0.82rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ background: '#76b900', color: '#000000', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem' }}>
+                  NEBIUS TOKEN FACTORY
+                </span>
+                <span style={{ fontWeight: 700, color: '#15803d' }}>
+                  Evaluated by NVIDIA Nemotron ({report.model})
+                </span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#334155', marginTop: '0.25rem' }}>
+                <strong>Provider:</strong> Nebius Token Factory • <strong>Model ID:</strong> <code style={{ color: '#166534', fontWeight: 700 }}>{report.model}</code>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                API Endpoint: <code>{report.apiUrl || 'https://api.tokenfactory.nebius.com/v1/chat/completions'}</code> • Track: Nebius x NVIDIA Hackathon
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: '0.85rem', fontSize: '0.82rem', color: report.genLayerVerified ? '#08734e' : '#965b09' }}>
+              {report.genLayerVerified ? '⛓️ Consensus reviewed on GenLayer Studionet' : '◌ Local eligibility preview · No onchain review'}
+              {report.transactionHash && <div style={{ marginTop: '0.4rem' }}>Transaction: <code style={{ overflowWrap: 'anywhere' }}>{report.transactionHash}</code></div>}
+              {report.contractAddress && <div>Contract: <code>{report.contractAddress}</code></div>}
+              <div style={{ marginTop: '0.4rem', opacity: 0.8 }}>Self-reported credentials are not authenticated by an issuer.</div>
+            </div>
+          )}
         </div>
 
         <div className="progress-bar-container">
@@ -117,6 +219,31 @@ export default function ResultsScreen({
           </div>
         </div>
       </div>
+
+      {/* Next Step Box (Returned by Nemotron or generated plan) */}
+      {report.nextStep && (
+        <div style={{
+          background: report.nebiusVerified ? 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)' : '#eff6ff',
+          border: report.nebiusVerified ? '1px solid #86efac' : '1px solid #bfdbfe',
+          borderRadius: '12px',
+          padding: '1rem 1.25rem',
+          marginBottom: '1.75rem'
+        }}>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: report.nebiusVerified ? '#15803d' : '#1d4ed8',
+            marginBottom: '0.35rem'
+          }}>
+            Recommended Next Step ({report.nebiusVerified ? `via NVIDIA Nemotron (${report.model})` : 'Action Plan'}):
+          </div>
+          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', lineHeight: 1.5 }}>
+            {report.nextStep}
+          </div>
+        </div>
+      )}
 
       {/* "Help Me Prepare" Callout when gaps exist */}
       {gapCount > 0 && (
@@ -492,7 +619,23 @@ export default function ResultsScreen({
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={handleTriggerNebius}
+            disabled={isNebiusEvaluating}
+            style={{
+              background: 'linear-gradient(135deg, #76b900 0%, #1e293b 100%)',
+              color: '#ffffff',
+              border: '1px solid #76b900',
+              fontWeight: 700,
+              padding: '0.45rem 0.9rem',
+              boxShadow: '0 4px 10px rgba(118, 185, 0, 0.25)'
+            }}
+          >
+            {isNebiusEvaluating ? 'Evaluating on Nebius...' : 'Match with Nemotron on Nebius ⚡'}
+          </button>
           <button
             type="button"
             className="btn btn-primary"
@@ -506,6 +649,91 @@ export default function ResultsScreen({
             onClick={onReset}
           >
             Check Another Opportunity
+          </button>
+        </div>
+      </div>
+
+      {/* Nebius Token Factory Proof & Model Inspection Box */}
+      <div style={{
+        marginTop: '2rem',
+        background: '#0b1120',
+        border: '1px solid #76b900',
+        borderRadius: '16px',
+        padding: '1.5rem',
+        color: '#f8fafc',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(118, 185, 0, 0.15)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{
+              background: '#76b900',
+              color: '#000000',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              padding: '0.2rem 0.6rem',
+              borderRadius: '6px',
+              letterSpacing: '0.05em'
+            }}>
+              NVIDIA NEMOTRON
+            </span>
+            <strong style={{ fontSize: '1.05rem', color: '#ffffff' }}>
+              Nebius Token Factory Inference
+            </strong>
+          </div>
+
+          <span style={{
+            fontSize: '0.75rem',
+            padding: '0.2rem 0.6rem',
+            borderRadius: '999px',
+            background: report.nebiusVerified ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 255, 255, 0.08)',
+            color: report.nebiusVerified ? '#4ade80' : '#94a3b8',
+            border: `1px solid ${report.nebiusVerified ? 'rgba(74, 222, 128, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+            fontWeight: 700
+          }}>
+            {report.nebiusVerified ? '✓ Active Decision Provider' : 'Available on Demand'}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.85rem', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Provider</span>
+            <strong style={{ color: '#ffffff' }}>Nebius Token Factory</strong>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Model ID</span>
+            <strong style={{ color: '#4ade80', fontFamily: 'monospace' }}>{report.model || 'nvidia/Nemotron-3-Ultra-550b-a55b'}</strong>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>OpenAI-Compatible Base</span>
+            <span style={{ color: '#93c5fd', fontFamily: 'monospace', fontSize: '0.75rem' }}>https://api.tokenfactory.nebius.com/v1/</span>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            <span style={{ color: '#94a3b8', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Hackathon Track</span>
+            <span style={{ color: '#facc15', fontWeight: 600 }}>Best Apps and Agents</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', maxWidth: '620px', lineHeight: 1.5 }}>
+            Eligibility decisions are produced by an NVIDIA open model served on Nebius Token Factory. The route <code>/api/nebius-match</code> calls Token Factory chat completions with the Nemotron model, returning pure JSON.
+          </p>
+
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={handleTriggerNebius}
+            disabled={isNebiusEvaluating}
+            style={{
+              background: '#76b900',
+              color: '#000000',
+              fontWeight: 800,
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            {isNebiusEvaluating ? 'Evaluating on Nebius...' : report.nebiusVerified ? 'Re-run Nemotron Match' : 'Match with Nemotron on Nebius'}
           </button>
         </div>
       </div>

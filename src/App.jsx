@@ -11,6 +11,8 @@ import LandingPage from './components/landing/LandingPage';
 import SimulatedAlexaScreen from './components/SimulatedAlexaScreen';
 import { evaluateRequirements, SAMPLE_DATASETS } from './services/requirementMatcher';
 import { evaluateRequirementsViaGenLayer } from './services/genlayerService';
+import { evaluateRequirementsViaNebius } from './services/nebiusService';
+
 
 function getInitialViewMode() {
   if (typeof window !== 'undefined') {
@@ -117,6 +119,10 @@ export default function App() {
     setHasEvaluated(false);
   };
 
+  // Nebius Token Factory evaluation state (Nebius x NVIDIA Hackathon)
+  const [isNebiusEvaluating, setIsNebiusEvaluating] = useState(false);
+  const [nebiusError, setNebiusError] = useState('');
+
   // Perform evaluation using GenLayer Studionet service
   const handleEvaluate = async () => {
     setIsEvaluating(true);
@@ -132,6 +138,29 @@ export default function App() {
       setIsEvaluating(false);
     }
   };
+
+  // Perform evaluation using NVIDIA Nemotron on Nebius Token Factory
+  const handleEvaluateNebius = async () => {
+    setIsNebiusEvaluating(true);
+    setNebiusError('');
+    try {
+      const nebiusResult = await evaluateRequirementsViaNebius(
+        credentials,
+        requirementsText,
+        cvData,
+        opportunityTitle
+      );
+      setReport(nebiusResult);
+      setHasEvaluated(true);
+      setCurrentScreen('results');
+    } catch (err) {
+      setNebiusError(err.message || 'Nebius Token Factory evaluation failed.');
+      throw err;
+    } finally {
+      setIsNebiusEvaluating(false);
+    }
+  };
+
 
   // Handle popstate for browser navigation (back/forward)
   React.useEffect(() => {
@@ -277,6 +306,9 @@ export default function App() {
             onEvaluate={handleEvaluate}
             evaluationError={evaluationError}
             isEvaluating={isEvaluating}
+            onEvaluateNebius={handleEvaluateNebius}
+            isNebiusEvaluating={isNebiusEvaluating}
+            nebiusError={nebiusError}
             onBack={() => setCurrentScreen('credentials')}
           />
         )}
@@ -291,6 +323,9 @@ export default function App() {
             onEditRequirements={() => setCurrentScreen('requirements')}
             onEditCredentials={() => setCurrentScreen('credentials')}
             onReset={handleResetOpportunity}
+            onEvaluateNebius={handleEvaluateNebius}
+            isNebiusEvaluating={isNebiusEvaluating}
+            nebiusError={nebiusError}
           />
         )}
 
