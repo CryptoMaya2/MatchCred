@@ -250,6 +250,11 @@ export default function App() {
             onClearCredentials={handleClearCredentials}
             onContinue={() => setCurrentScreen('requirements')}
             onBack={() => setViewMode('landing')}
+            requirementsText={requirementsText}
+            opportunityTitle={opportunityTitle}
+            onOpenAlexa={handleOpenAlexa}
+            onProceedToPrep={() => setCurrentScreen('preparation')}
+            onProceedToResults={() => setCurrentScreen('results')}
           />
         )}
 

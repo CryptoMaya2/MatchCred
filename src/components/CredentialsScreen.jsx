@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CvUploadDropzone from './CvUploadDropzone';
 import CvReviewCard from './CvReviewCard';
+import EmbeddedAlexaWidget from './EmbeddedAlexaWidget';
 
 export default function CredentialsScreen({
   credentials,
@@ -15,7 +16,12 @@ export default function CredentialsScreen({
   cvData,
   onChangeCvData,
   inputMode = 'credentials',
-  setInputMode
+  setInputMode,
+  requirementsText = '',
+  opportunityTitle = '',
+  onOpenAlexa,
+  onProceedToPrep,
+  onProceedToResults
 }) {
   const [name, setName] = useState('');
   const [issuer, setIssuer] = useState('');
@@ -56,7 +62,7 @@ export default function CredentialsScreen({
   };
 
   const showCvSection = inputMode === 'cv' || inputMode === 'both';
-  const showCredentialsSection = inputMode === 'credentials' || inputMode === 'both';
+  const showCredentialsSection = inputMode === 'credentials' || inputMode === 'both' || inputMode === 'alexa';
 
   return (
     <div>
@@ -80,14 +86,26 @@ export default function CredentialsScreen({
           )}
         </div>
         <p className="screen-subtitle">
-          Choose how you want to provide your information: add formal credentials, upload your CV to extract practical experience, or combine both.
+          Choose how you want to provide your information: ask or speak to Alexa voice assistant, add formal credentials manually, upload your CV, or combine methods.
         </p>
       </div>
 
-      {/* 3-WAY STARTING FLOW SELECTOR (Option 1: Add Credentials | Option 2: Upload CV | Option 3: Use Both) */}
+      {/* EMBEDDED SIMULATED ALEXA+ VOICE ASSISTANT */}
+      <EmbeddedAlexaWidget
+        credentials={credentials}
+        cvData={cvData}
+        requirementsText={requirementsText}
+        opportunityTitle={opportunityTitle}
+        onLoadPreset={onLoadPreset}
+        onOpenAlexaFullScreen={onOpenAlexa}
+        onProceedToPrep={onProceedToPrep}
+        onProceedToResults={onProceedToResults}
+      />
+
+      {/* 4-WAY STARTING FLOW SELECTOR */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '0.75rem',
         marginBottom: '1.75rem'
       }}>
@@ -160,6 +178,33 @@ export default function CredentialsScreen({
           </strong>
           <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
             Combine your CV with formal credentials for full evidence
+          </span>
+        </div>
+
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            if (setInputMode) setInputMode('alexa');
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+          }}
+          style={{
+            padding: '1rem',
+            cursor: 'pointer',
+            textAlign: 'left',
+            border: inputMode === 'alexa' ? '2px solid #00caff' : '1px solid #e2e8f0',
+            background: inputMode === 'alexa' ? 'rgba(0, 202, 255, 0.08)' : '#ffffff',
+            borderRadius: '12px',
+            boxShadow: inputMode === 'alexa' ? '0 4px 12px rgba(0, 202, 255, 0.15)' : 'none',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <div style={{ fontSize: '1.3rem', marginBottom: '0.35rem' }}>🎙️</div>
+          <strong style={{ display: 'block', fontSize: '0.95rem', color: inputMode === 'alexa' ? '#0284c7' : '#0f172a' }}>
+            Option 4: Alexa Voice
+          </strong>
+          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+            Ask hands-free with speech recognition &amp; spoken feedback
           </span>
         </div>
       </div>
