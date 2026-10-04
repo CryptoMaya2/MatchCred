@@ -1,0 +1,878 @@
+/* ============================================================================
+   SIMULATED ALEXA+ EXPERIENCE STYLES
+   ============================================================================ */
+
+.alexa-experience-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem 1rem;
+  color: #d7e2ea;
+  font-family: 'Kanit', sans-serif;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header badge */
+.alexa-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(0, 202, 255, 0.12);
+  border: 1px solid rgba(0, 202, 255, 0.35);
+  border-radius: 999px;
+  color: #7de2ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 12px rgba(0, 202, 255, 0.15);
+}
+
+.alexa-header-badge:hover {
+  background: rgba(0, 202, 255, 0.25);
+  border-color: #00caff;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(0, 202, 255, 0.3);
+}
+
+.alexa-header-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00caff;
+  box-shadow: 0 0 8px #00caff;
+  display: inline-block;
+  animation: alexaPulse 1.5s infinite ease-in-out;
+}
+
+/* Header bar */
+.alexa-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(18, 22, 32, 0.85);
+  border: 1px solid rgba(0, 202, 255, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 202, 255, 0.1);
+  backdrop-filter: blur(12px);
+  margin-bottom: 1.5rem;
+}
+
+.alexa-brand-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.alexa-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.15rem;
+}
+
+.alexa-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  background: linear-gradient(90deg, rgba(0, 202, 255, 0.2), rgba(124, 92, 252, 0.2));
+  color: #7de2ff;
+  border: 1px solid rgba(125, 226, 255, 0.35);
+  border-radius: 999px;
+}
+
+.alexa-sub-badge {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.alexa-main-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* Pulsing Alexa Ring indicator */
+.alexa-ring-indicator {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00caff 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 14px rgba(0, 202, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.alexa-ring-core {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0c0c0c;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
+
+.alexa-ring-indicator.speaking {
+  box-shadow: 0 0 25px #00caff, 0 0 45px rgba(0, 202, 255, 0.6);
+  animation: alexaPulse 1.4s infinite ease-in-out;
+}
+
+.alexa-ring-indicator.listening {
+  box-shadow: 0 0 25px #ef4444, 0 0 45px rgba(239, 68, 68, 0.6);
+  background: radial-gradient(circle, #ef4444 0%, #b91c1c 100%);
+}
+
+@keyframes alexaPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.35); }
+}
+
+/* Top control buttons */
+.alexa-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alexa-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alexa-icon-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(0, 202, 255, 0.4);
+  color: #ffffff;
+}
+
+.alexa-icon-btn.muted {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.alexa-nav-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  background: rgba(77, 163, 255, 0.12);
+  border: 1px solid rgba(77, 163, 255, 0.3);
+  border-radius: 999px;
+  color: #7de2ff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alexa-nav-back-btn:hover {
+  background: rgba(77, 163, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Stage layout */
+.alexa-screen-stage {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .alexa-screen-stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ambient Card (Left) */
+.alexa-ambient-card {
+  position: relative;
+  background: rgba(15, 20, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  backdrop-filter: blur(14px);
+}
+
+.alexa-ambient-halo {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(0, 202, 255, 0.12) 0%, rgba(37, 99, 235, 0.04) 50%, transparent 75%);
+  pointer-events: none;
+}
+
+.alexa-display-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.75rem;
+}
+
+.alexa-context-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alexa-context-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  background: rgba(22, 28, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.alexa-context-tile.active {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.alexa-context-tile.empty {
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.tile-icon {
+  color: #7de2ff;
+  margin-top: 2px;
+}
+
+.tile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tile-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+}
+
+.tile-value {
+  display: block;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Example Callout */
+.alexa-example-callout {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border: 1px solid rgba(0, 202, 255, 0.25);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.alexa-example-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(90deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  transition: all 0.2s;
+}
+
+.alexa-example-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+/* App bridge buttons */
+.alexa-app-bridge {
+  background: rgba(24, 30, 44, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.alexa-bridge-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alexa-bridge-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #ffffff;
+}
+
+.alexa-bridge-btn.primary {
+  background: rgba(77, 163, 255, 0.15);
+  border-color: rgba(77, 163, 255, 0.4);
+  color: #7de2ff;
+}
+
+.alexa-bridge-btn.primary:hover {
+  background: rgba(77, 163, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Chat Display Stage (Right) */
+.alexa-chat-display {
+  background: rgba(14, 18, 28, 0.85);
+  border: 1px solid rgba(0, 202, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 580px;
+  position: relative;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+}
+
+/* Active speech waveform bar */
+.alexa-speech-indicator-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1rem;
+  background: rgba(0, 202, 255, 0.12);
+  border: 1px solid rgba(0, 202, 255, 0.3);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.alexa-wave-animation {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.alexa-wave-animation span {
+  display: inline-block;
+  width: 3px;
+  background: #00caff;
+  border-radius: 999px;
+  animation: waveBar 1s infinite ease-in-out;
+}
+
+.alexa-wave-animation span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.alexa-wave-animation span:nth-child(2) { height: 14px; animation-delay: 0.3s; }
+.alexa-wave-animation span:nth-child(3) { height: 18px; animation-delay: 0.15s; }
+.alexa-wave-animation span:nth-child(4) { height: 10px; animation-delay: 0.4s; }
+.alexa-wave-animation span:nth-child(5) { height: 6px; animation-delay: 0.2s; }
+
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1.2); }
+}
+
+.alexa-speech-stop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.alexa-speech-stop-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+/* Conversation Feed */
+.alexa-conversation-feed {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-right: 0.3rem;
+  margin-bottom: 1.25rem;
+  max-height: 480px;
+}
+
+.alexa-bubble-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.alexa-bubble-row.user {
+  justify-content: flex-end;
+}
+
+.alexa-avatar-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00caff, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.dot-inner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0c0c0c;
+}
+
+.alexa-bubble {
+  max-width: 90%;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  line-height: 1.5;
+  font-size: 0.925rem;
+}
+
+.alexa-bubble.alexa {
+  background: rgba(22, 29, 44, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-top-left-radius: 4px;
+}
+
+.alexa-bubble.user {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: #ffffff;
+  border-top-right-radius: 4px;
+  font-weight: 500;
+}
+
+.alexa-bubble-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #f8fafc;
+}
+
+/* Result Card */
+.alexa-result-card {
+  margin-top: 1rem;
+  background: rgba(15, 20, 32, 0.95);
+  border: 1px solid rgba(0, 202, 255, 0.35);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.alexa-score-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+}
+
+.alexa-score-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 202, 255, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%);
+  border: 3px solid #00caff;
+  box-shadow: 0 0 15px rgba(0, 202, 255, 0.3);
+}
+
+.alexa-score-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.alexa-score-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #7de2ff;
+  letter-spacing: 0.06em;
+}
+
+.alexa-score-breakdown {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.pill-badge.met {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.pill-badge.unclear {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.pill-badge.unmet {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+/* Next Step Card inside Alexa */
+.alexa-next-step-box {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(37, 99, 235, 0.2) 100%);
+  border: 1px solid rgba(77, 163, 255, 0.35);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+/* Detailed items list */
+.alexa-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.alexa-item-row {
+  background: rgba(26, 33, 50, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+.alexa-item-row.met {
+  border-left: 3px solid #10b981;
+}
+
+.alexa-item-row.unclear {
+  border-left: 3px solid #f59e0b;
+}
+
+.alexa-item-row.not-met {
+  border-left: 3px solid #ef4444;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.status-pill.met {
+  background: #10b981;
+  color: #0c0c0c;
+}
+
+.status-pill.unclear {
+  background: #f59e0b;
+  color: #0c0c0c;
+}
+
+.status-pill.not-met {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.item-req-text {
+  font-size: 0.85rem;
+}
+
+.item-explanation {
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.alexa-result-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Missing prompt panel */
+.alexa-missing-prompt-box {
+  margin-top: 1rem;
+  background: rgba(15, 20, 32, 0.9);
+  border: 1px solid rgba(0, 202, 255, 0.25);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.alexa-quick-textarea {
+  width: 100%;
+  background: rgba(10, 14, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.825rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.alexa-quick-textarea:focus {
+  outline: none;
+  border-color: #00caff;
+}
+
+.alexa-quick-input {
+  width: 100%;
+  background: rgba(10, 14, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.825rem;
+  font-family: inherit;
+}
+
+.alexa-quick-input:focus {
+  outline: none;
+  border-color: #00caff;
+}
+
+.alexa-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alexa-btn-sm:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.9);
+  color: #ffffff;
+}
+
+.alexa-btn-sm.primary {
+  background: linear-gradient(90deg, #0284c7 0%, #2563eb 100%);
+  border: none;
+  color: #ffffff;
+}
+
+.alexa-btn-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick prompt chips */
+.alexa-quick-prompts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+}
+
+.alexa-prompt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(24, 32, 48, 0.75);
+  border: 1px solid rgba(0, 202, 255, 0.2);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alexa-prompt-chip:hover {
+  background: rgba(0, 202, 255, 0.15);
+  border-color: #00caff;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.alexa-prompt-chip.primary {
+  background: rgba(0, 202, 255, 0.12);
+  border-color: rgba(0, 202, 255, 0.45);
+  color: #7de2ff;
+  font-weight: 700;
+}
+
+.alexa-prompt-chip.primary:hover {
+  background: rgba(0, 202, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Bottom Input Bar */
+.alexa-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(20, 26, 40, 0.95);
+  border: 1px solid rgba(0, 202, 255, 0.3);
+  border-radius: 999px;
+  padding: 0.35rem 0.5rem 0.35rem 0.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.alexa-mic-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #7de2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.alexa-mic-btn:hover {
+  background: rgba(0, 202, 255, 0.2);
+  color: #ffffff;
+}
+
+.alexa-mic-btn.listening {
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+  animation: alexaPulse 1.2s infinite ease-in-out;
+}
+
+.alexa-text-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  font-family: inherit;
+}
+
+.alexa-text-input::placeholder {
+  color: #64748b;
+}
+
+.alexa-send-btn {
+  padding: 0.5rem 1.15rem;
+  background: linear-gradient(90deg, #00caff 0%, #2563eb 100%);
+  border: none;
+  border-radius: 999px;
+  color: #0c0c0c;
+  font-size: 0.825rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.alexa-send-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.alexa-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.alexa-footer-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-align: center;
+}

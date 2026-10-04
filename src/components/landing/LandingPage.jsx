@@ -19,9 +19,23 @@ function ProductPreview() {
   </div>;
 }
 
-export default function LandingPage({ onOpenApp }) {
+export default function LandingPage({ onOpenApp, onOpenAlexa }) {
   return <div className="mc-site" id="top">
-    <header className="mc-nav"><a href="#top" aria-label="MatchCred home" className="mc-brand"><Logo size={33} variant="light"/></a><nav aria-label="Main navigation"><a href="#experience">The experience</a><a href="#how">How it works</a><a href="#genlayer">GenLayer</a></nav><button className="mc-nav-button" onClick={() => onOpenApp('credentials')}>Open MatchCred <ArrowUpRight size={15}/></button></header>
+    <header className="mc-nav">
+      <a href="#top" aria-label="MatchCred home" className="mc-brand"><Logo size={33} variant="light"/></a>
+      <nav aria-label="Main navigation">
+        <a href="#experience">The experience</a>
+        <a href="#how">How it works</a>
+        <a href="#genlayer">GenLayer</a>
+        {onOpenAlexa && (
+          <button type="button" onClick={onOpenAlexa} className="mc-nav-alexa-link" style={{ background: 'none', border: 'none', color: '#7de2ff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00caff', display: 'inline-block', boxShadow: '0 0 8px #00caff' }} />
+            Simulated Alexa+
+          </button>
+        )}
+      </nav>
+      <button className="mc-nav-button" onClick={() => onOpenApp('credentials')}>Open MatchCred <ArrowUpRight size={15}/></button>
+    </header>
     <main>
       <section className="mc-hero"><div className="mc-hero-glow"/><div className="mc-hero-inner"><span className="mc-eyebrow">A smarter way to see what’s possible</span><h1>Every opportunity<br/>starts with <em>clarity.</em></h1><p>Know how your experience matches the opportunity ahead. See what you have, what you need, and where to go next.</p><div className="mc-hero-actions"><button className="mc-primary" onClick={() => onOpenApp('credentials')}>Check your eligibility <ArrowRight size={18}/></button><a href="#experience">See how it works <ArrowUpRight size={16}/></a></div><div className="mc-hero-note"><ShieldCheck size={15}/> Clear evidence. Honest answers. Your next step.</div></div><div className="mc-product-stage"><div className="mc-stage-halo"/><ProductPreview/><div className="mc-stage-caption">A clearer view of what comes next.</div></div></section>
 

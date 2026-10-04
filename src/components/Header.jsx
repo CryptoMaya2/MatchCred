@@ -1,7 +1,7 @@
 import React from 'react';
 import Logo from './Logo';
 
-export default function Header({ currentScreen, setCurrentScreen, hasEvaluated, onBackToLanding }) {
+export default function Header({ currentScreen, setCurrentScreen, hasEvaluated, onBackToLanding, onOpenAlexa }) {
   const steps = [
     { id: 'credentials', label: 'Credentials or CV', stepNum: 1 },
     { id: 'requirements', label: 'Opportunity', stepNum: 2 },
@@ -73,6 +73,18 @@ export default function Header({ currentScreen, setCurrentScreen, hasEvaluated, 
             );
           })}
         </nav>
+
+        {onOpenAlexa && (
+          <button
+            type="button"
+            onClick={onOpenAlexa}
+            className="alexa-header-badge"
+            title="Open Simulated Alexa+ Experience at /alexa"
+          >
+            <span className="alexa-header-pulse" />
+            <span>Simulated Alexa+</span>
+          </button>
+        )}
       </div>
     </header>
   );

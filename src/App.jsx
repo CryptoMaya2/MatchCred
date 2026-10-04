@@ -8,12 +8,25 @@ import PreparationScreen from './components/PreparationScreen';
 import PreparationPlanScreen from './components/PreparationPlanScreen';
 import ApplicationScreen from './components/ApplicationScreen';
 import LandingPage from './components/landing/LandingPage';
+import SimulatedAlexaScreen from './components/SimulatedAlexaScreen';
 import { evaluateRequirements, SAMPLE_DATASETS } from './services/requirementMatcher';
 import { evaluateRequirementsViaGenLayer } from './services/genlayerService';
 
+function getInitialViewMode() {
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    if (path.startsWith('/alexa') || hash.startsWith('#/alexa') || search.includes('alexa')) {
+      return 'alexa';
+    }
+  }
+  return 'landing';
+}
+
 export default function App() {
-  // View mode: 'landing' or 'app' (starts on the premium landing page)
-  const [viewMode, setViewMode] = useState('landing');
+  // View mode: 'landing' | 'app' | 'alexa'
+  const [viewMode, setViewMode] = useState(getInitialViewMode);
   const [currentScreen, setCurrentScreen] = useState('credentials');
 
   // User credentials state - starts empty by default, allowing user to enter their own credentials
@@ -120,6 +133,43 @@ export default function App() {
     }
   };
 
+  // Handle popstate for browser navigation (back/forward)
+  React.useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (path.startsWith('/alexa') || hash.startsWith('#/alexa') || search.includes('alexa')) {
+        setViewMode('alexa');
+      } else if (viewMode === 'alexa') {
+        setViewMode('landing');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [viewMode]);
+
+  const handleOpenAlexa = () => {
+    if (window.location.pathname !== '/alexa') {
+      window.history.pushState(null, '', '/alexa');
+    }
+    setViewMode('alexa');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackFromAlexa = (targetScreen = 'landing') => {
+    if (window.location.pathname === '/alexa') {
+      window.history.pushState(null, '', '/');
+    }
+    if (targetScreen === 'landing') {
+      setViewMode('landing');
+    } else {
+      setViewMode('app');
+      setCurrentScreen(targetScreen);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleResetOpportunity = () => {
     setRequirementsText('');
     setOpportunityTitle('');
@@ -128,11 +178,36 @@ export default function App() {
     setCurrentScreen('requirements');
   };
 
+  // If in simulated Alexa+ view mode, render SimulatedAlexaScreen at /alexa
+  if (viewMode === 'alexa') {
+    return (
+      <div className="app-container">
+        <SimulatedAlexaScreen
+          credentials={credentials}
+          setCredentials={setCredentials}
+          cvData={cvData}
+          setCvData={setCvData}
+          requirementsText={requirementsText}
+          setRequirementsText={setRequirementsText}
+          opportunityTitle={opportunityTitle}
+          setOpportunityTitle={setOpportunityTitle}
+          report={report}
+          setReport={setReport}
+          onOpenMatchCred={(targetScreen) => {
+            handleBackFromAlexa(targetScreen || 'results');
+          }}
+          onBackToMain={() => handleBackFromAlexa('landing')}
+        />
+      </div>
+    );
+  }
+
   // If in landing view mode, render the refined, spacious 3D Landing Page
   if (viewMode === 'landing') {
     return (
       <LandingPage
         onOpenApp={handleOpenApp}
+        onOpenAlexa={handleOpenAlexa}
       />
     );
   }
@@ -146,6 +221,7 @@ export default function App() {
         hasEvaluated={hasEvaluated}
         hasPrepared={savedExperiences.length > 0}
         onBackToLanding={() => setViewMode('landing')}
+        onOpenAlexa={handleOpenAlexa}
       />
 
       <main className="main-content">
