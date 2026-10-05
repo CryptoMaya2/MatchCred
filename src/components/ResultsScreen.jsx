@@ -195,10 +195,29 @@ export default function ResultsScreen({
             </div>
           ) : (
             <div style={{ marginTop: '0.85rem', fontSize: '0.82rem', color: report.genLayerVerified ? '#08734e' : '#965b09' }}>
-              {report.genLayerVerified ? '⛓️ Consensus reviewed on GenLayer Studionet' : '◌ Local eligibility preview · No onchain review'}
+              {report.genLayerVerified ? (
+                report.hasWebProvenance ? (
+                  <span style={{ fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🌐 GenLayer Web Provenance Consensus Verified
+                  </span>
+                ) : (
+                  <span>⛓️ Consensus reviewed on GenLayer Studionet</span>
+                )
+              ) : (
+                '◌ Local eligibility preview · No onchain review'
+              )}
+              {report.opportunityUrl && (
+                <div style={{ marginTop: '0.3rem', color: '#1e3a8a' }}>
+                  <strong>Source URL:</strong> <a href={report.opportunityUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>{report.opportunityUrl}</a>
+                </div>
+              )}
               {report.transactionHash && <div style={{ marginTop: '0.4rem' }}>Transaction: <code style={{ overflowWrap: 'anywhere' }}>{report.transactionHash}</code></div>}
               {report.contractAddress && <div>Contract: <code>{report.contractAddress}</code></div>}
-              <div style={{ marginTop: '0.4rem', opacity: 0.8 }}>Self-reported credentials are not authenticated by an issuer.</div>
+              <div style={{ marginTop: '0.4rem', opacity: 0.85 }}>
+                {report.hasWebProvenance
+                  ? 'GenLayer validators independently fetched and authenticated live web sources via gl.nondet.web.'
+                  : 'Credentials without external web proof links are evaluated based on candidate-submitted data.'}
+              </div>
             </div>
           )}
         </div>
@@ -420,6 +439,12 @@ export default function ResultsScreen({
                         <>
                           <span>•</span>
                           <span><strong>Ref:</strong> {item.evidence.documentRef}</span>
+                        </>
+                      )}
+                      {(item.provenance === 'AUTHENTICATED_WEB_SOURCE' || item.provenance === 'VERIFIED_LIVE_SOURCE') && (
+                        <>
+                          <span>•</span>
+                          <span style={{ color: '#166534', fontWeight: 700 }}>🌐 Web Provenance Authenticated</span>
                         </>
                       )}
                     </div>

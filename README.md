@@ -6,10 +6,10 @@ An eligibility assessment for jobs, scholarships, and fellowships. Candidates en
 
 - **Local preview:** Works without a wallet or contract. Uses rule-based matching in the browser. Results are clearly marked as local.
 - **Simulated Alexa+ experience (`/alexa`):** An ambient voice-and-screen interface simulating Alexa+ smart display interactions (no official Alexa SDK required). Users can tap or ask *"Alexa, do I qualify for this fellowship?"*. The interface verifies if credentials or opportunity text are present (prompting for them only if not already loaded), evaluates eligibility via MatchCred's matching engine, and presents plus speaks the verdict (percent match, met, unclear, not met, and next steps) using browser speech synthesis with a complete text fallback. Includes a one-click *"Try the example"* flow wired to the sample fellowship.
-- **GenLayer consensus review:** Enabled by the deployed Studionet address in the application. Override with `VITE_GENLAYER_CONTRACT_ADDRESS` if deploying a newer version. Connects a wallet on Studionet, submits a write transaction, waits for finalization, then reads the stored review. Failed or rejected transactions show an error, never a fake verified result.
+- **GenLayer consensus review & live web provenance:** Enabled by the deployed Studionet address in the application. Override with `VITE_GENLAYER_CONTRACT_ADDRESS` if deploying a newer version. GenLayer validators leverage non-deterministic web retrieval (`gl.nondet.web.render`) to authenticate live opportunity requirements and candidate proof links directly from authentic web sources, reaching comparative consensus (`gl.eq_principle.prompt_comparative`) on both requirement status and source authenticity.
 - **Nebius Token Factory (NVIDIA Nemotron):** Third evaluation mode built for the *Nebius x NVIDIA Global AI Hackathon (Best Apps and Agents)*. Calls an NVIDIA open model served on Nebius Token Factory (`nvidia/Nemotron-3-Ultra-550b-a55b`) via the secure server route `/api/nebius-match`. Returns structured JSON containing percent match, requirement evidence sentences, and actionable next steps.
 
-**Important:** A candidate can type any qualification. MatchCred does not yet verify issuance with universities, licensing bodies, or employers. GenLayer consensus assesses supplied evidence against requirements; it does not establish whether the evidence is authentic. The onchain path sends manually entered credential names, issuers, years, statuses and requirements to a public chain. CV uploads are blocked from the onchain path because they can contain private information.
+**Provenance & Verification:** Candidates can provide verifiable web proof links (e.g. GitHub profile/repo, certificate URL, accreditation registry, or portfolio) and official opportunity URLs. GenLayer validators independently fetch and authenticate these live web sources before consensus evaluation. Any credentials without web verification links remain transparently classified as self-reported. The onchain path sends non-sensitive credential data and URLs to a public chain. CV uploads are blocked from the onchain path to protect personal data.
 
 ## Run locally
 
@@ -38,14 +38,14 @@ MatchCred includes a dedicated **Simulated Alexa+ experience** accessible direct
 
 ## Deploy the intelligent contract
 
-The source is [`contracts/MatchCred.py`](contracts/MatchCred.py). The old `gl.llm_call` view implementation has been replaced with a state-changing function using `gl.nondet.exec_prompt` under `gl.eq_principle.prompt_comparative` and a read function to retrieve finalized decisions.
+The source is [`contracts/MatchCred.py`](contracts/MatchCred.py). It features `evaluate_requirements_with_provenance` using `gl.nondet.web.render` to authenticate live web sources (official opportunity URLs and candidate proof links), running non-deterministic LLM consensus (`gl.nondet.exec_prompt`) under comparative equivalence (`gl.eq_principle.prompt_comparative`) to establish consensus on both substance and provenance authenticity.
 
 1. Open [GenLayer Studio](https://studio.genlayer.com/) and connect the wallet that will own the deployment. Ensure the environment is **Studionet**, chain ID **61999**.
 2. Paste `contracts/MatchCred.py` into Studio and deploy. Wait for a successful finalized deployment, then copy the **contract address** from Studio. A source file or transaction hash alone is not a deployed address.
 3. Put `VITE_GENLAYER_CONTRACT_ADDRESS=0x...` in `.env` locally and in the frontend hosting environment. Rebuild the frontend (`npm run build`). Never commit private keys or seed phrases.
-4. Submit a short, non-sensitive credential and one requirement from two different wallets to verify `evaluate_requirements` and `get_review`; check the transaction in Studio. Validate the deployed schema if Studio reports an SDK or GenVM compatibility error.
+4. Submit non-sensitive credentials (optionally including a proof URL such as a GitHub link or public certificate) and an opportunity URL to test `evaluate_requirements_with_provenance` and `get_review`; check the transaction in Studio. Validate the deployed schema if Studio reports an SDK or GenVM compatibility error.
 
-Deployment requires a funded, connected wallet. Studionet deployment `0xE93A364A11b8e41615042921798303a9FBa2132f` finalized and a sample consensus review finalized successfully. Studio may reset; use Bradbury for a persistent testnet submission after Studio validation, and update the frontend network configuration to Bradbury if deploying there.
+Deployment requires a funded, connected wallet. Studionet deployment `0x4e071577C0A71c4710E9dAb1400FE881dCc5eBa1` finalized with live web source & provenance consensus support. Studio may reset; use Bradbury for a persistent testnet submission after Studio validation, and update the frontend network configuration to Bradbury if deploying there.
 
 ## Nebius Token Factory
 

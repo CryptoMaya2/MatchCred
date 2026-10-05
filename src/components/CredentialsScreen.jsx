@@ -394,17 +394,25 @@ export default function CredentialsScreen({
           </div>
 
           <div className="form-group" style={{ marginTop: '0.5rem' }}>
-            <label className="form-label" htmlFor="cred-doc">
-              Optional Document / Reference
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap' }}>
+              <label className="form-label" htmlFor="cred-doc">
+                Document Ref / Web Verification Link
+              </label>
+              <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600 }}>
+                🌐 GenLayer Web Provenance
+              </span>
+            </div>
             <input
               id="cred-doc"
               type="text"
               className="form-input"
-              placeholder="e.g. Certificate #AWS-88219, Degree #UL-CS-2025, or verification URL"
+              placeholder="e.g. https://github.com/username, https://registry.accred.org/cert/88219, or Cert #ID"
               value={documentRef}
               onChange={(e) => setDocumentRef(e.target.value)}
             />
+            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.25rem' }}>
+              Providing a live public URL allows GenLayer validators to fetch and authenticate your credential onchain.
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>

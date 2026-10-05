@@ -17,13 +17,15 @@ export default function RequirementsScreen({
   onEvaluateNebius,
   isNebiusEvaluating = false,
   nebiusError = '',
+  opportunityUrl = '',
+  setOpportunityUrl,
   onBack
 }) {
   // Input Method: 'paste' (Option A) or 'link' (Option B)
-  const [inputMode, setInputMode] = useState('paste');
+  const [inputMode, setInputMode] = useState(opportunityUrl ? 'link' : 'paste');
 
   // Option B Link State
-  const [linkUrl, setLinkUrl] = useState('');
+  const [linkUrl, setLinkUrl] = useState(opportunityUrl || '');
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractError, setExtractError] = useState(null);
   const [extractSuccess, setExtractSuccess] = useState(null);
@@ -47,6 +49,7 @@ export default function RequirementsScreen({
     setIsExtracting(false);
 
     if (result.success) {
+      if (setOpportunityUrl) setOpportunityUrl(targetUrl);
       if (result.title) setOpportunityTitle(result.title);
       if (result.requirementsText) setRequirementsText(result.requirementsText);
       setExtractSuccess({
@@ -117,11 +120,14 @@ export default function RequirementsScreen({
       {/* OPTION B: PASTE LINK */}
       {inputMode === 'link' && (
         <div className="card" style={{ marginBottom: '1.5rem', border: '1px solid #bfdbfe', background: '#f8fafc' }}>
-          <h3 style={{ fontSize: '1.1rem', color: '#1e3a8a', marginBottom: '0.4rem' }}>
-            Option B: Extract Directly from Opportunity Link
+          <h3 style={{ fontSize: '1.1rem', color: '#1e3a8a', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span>Option B: Extract Directly from Opportunity Link</span>
+            <span style={{ fontSize: '0.72rem', background: '#dcfce7', color: '#166534', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+              🌐 Web Provenance Anchored
+            </span>
           </h3>
           <p style={{ fontSize: '0.875rem', color: '#475569', marginBottom: '1rem' }}>
-            Enter a public job or scholarship posting URL. MatchCred will attempt to extract the title, organization, and requirements.
+            Enter a public job or scholarship posting URL. When evaluating with GenLayer, validators fetch and authenticate official requirements directly from this live web source.
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>

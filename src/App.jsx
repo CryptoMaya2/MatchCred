@@ -43,6 +43,7 @@ export default function App() {
   // Opportunity requirements text state - starts empty by default
   const [requirementsText, setRequirementsText] = useState('');
   const [opportunityTitle, setOpportunityTitle] = useState('');
+  const [opportunityUrl, setOpportunityUrl] = useState('');
 
   // Active example preset tracker to distinguish sample data from user data
   const [activePreset, setActivePreset] = useState(null);
@@ -113,6 +114,7 @@ export default function App() {
     setInputMode('credentials');
     setRequirementsText('');
     setOpportunityTitle('');
+    setOpportunityUrl('');
     setActivePreset(null);
     setSavedExperiences([]);
     setReport(null);
@@ -128,7 +130,7 @@ export default function App() {
     setIsEvaluating(true);
     setEvaluationError('');
     try {
-      const evalResult = await evaluateRequirementsViaGenLayer(credentials, requirementsText, cvData);
+      const evalResult = await evaluateRequirementsViaGenLayer(credentials, requirementsText, cvData, opportunityUrl);
       setReport(evalResult);
       setHasEvaluated(true);
       setCurrentScreen('results');
@@ -293,6 +295,8 @@ export default function App() {
             setRequirementsText={setRequirementsText}
             opportunityTitle={opportunityTitle}
             setOpportunityTitle={setOpportunityTitle}
+            opportunityUrl={opportunityUrl}
+            setOpportunityUrl={setOpportunityUrl}
             activePreset={activePreset}
             onLoadPresetRequirements={(key) => {
               const dataset = SAMPLE_DATASETS[key];
@@ -317,6 +321,7 @@ export default function App() {
           <ResultsScreen
             report={report}
             opportunityTitle={opportunityTitle}
+            opportunityUrl={opportunityUrl}
             activePreset={activePreset}
             cvData={cvData}
             onHelpMePrepare={() => setCurrentScreen('preparation')}
